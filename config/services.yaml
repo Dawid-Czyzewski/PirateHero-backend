@@ -9,6 +9,7 @@ parameters:
     mailer_hidden_copy: '%env(default:default_mailer_hidden_copy:MAILER_HIDDEN_COPY)%'
     mailer_from: '%env(default:mailer_from_default:MAILER_FROM)%'
     mailer_from_default: 'no-reply@famefighters.com'
+    database_password_default: ''
     bestiary_unlock_all_default: 'false'
 
 services:
