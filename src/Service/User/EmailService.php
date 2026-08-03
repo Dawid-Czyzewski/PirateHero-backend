@@ -19,8 +19,9 @@ class EmailService implements SendRegistrationEmailPort, SendPasswordResetEmailP
         #[Autowire('%mailer_from%')]
         private string $mailFrom,
         #[Autowire('%mailer_hidden_copy%')]
-        private string $mailerHiddenCopy = '',
+        private ?string $mailerHiddenCopy = null,
     ) {
+        $this->mailerHiddenCopy = $mailerHiddenCopy ?? '';
     }
 
     public function sendRegistrationEmail(string $to, string $username, string $activateToken, string $frontendUrl): void
@@ -67,7 +68,7 @@ class EmailService implements SendRegistrationEmailPort, SendPasswordResetEmailP
 
     private function withHiddenCopy(Email $email): Email
     {
-        $bcc = trim($this->mailerHiddenCopy);
+        $bcc = trim($this->mailerHiddenCopy ?? '');
         if ($bcc !== '') {
             $email->bcc($bcc);
         }
