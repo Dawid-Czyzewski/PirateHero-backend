@@ -1159,42 +1159,6 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
-  /ships/chat/token:
-    get:
-      operationId: shipChatToken
-      tags: [Ships]
-      summary: Chat subscriber token
-      parameters:
-        - name: shipId
-          in: query
-          schema:
-            type: string
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                allOf:
-                  -
-                    $ref: "#/components/schemas/ApiEnvelope"
-                  -
-                    type: object
-                    properties:
-                      data:
-                        $ref: "#/components/schemas/ChatToken"
-        401:
-          description: Unauthenticated / invalid JWT
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/ProblemJson"
-        403:
-          description: Forbidden / business rule
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/ProblemJson"
   /ships/create:
     post:
       operationId: createShip
@@ -4182,15 +4146,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ShipMessage"
-    ChatToken:
-      type: object
-      properties:
-        token:
-          type: string
-        topic:
-          type: string
-        expiresAt:
-          type: integer
     MissionStartedResult:
       type: object
       properties:

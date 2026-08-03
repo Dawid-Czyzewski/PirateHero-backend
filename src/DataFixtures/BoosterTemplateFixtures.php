@@ -7,10 +7,16 @@ namespace App\DataFixtures;
 use App\Entity\BoosterTemplate;
 use App\Enum\BoosterType;
 use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Persistence\ObjectManager;
 
-class BoosterTemplateFixtures extends Fixture
+class BoosterTemplateFixtures extends Fixture implements FixtureGroupInterface
 {
+    public static function getGroups(): array
+    {
+        return ['catalog'];
+    }
+
     public function load(ObjectManager $manager): void
     {
         $boosterTypes = BoosterType::cases();

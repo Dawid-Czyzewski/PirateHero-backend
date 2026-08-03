@@ -7,11 +7,16 @@ namespace App\DataFixtures;
 use App\Entity\ShopBooster;
 use App\Service\ShopBoosters\ShopBoosterCatalogDefinition;
 use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Persistence\ObjectManager;
 
-
-final class ShopBoosterFixtures extends Fixture
+final class ShopBoosterFixtures extends Fixture implements FixtureGroupInterface
 {
+    public static function getGroups(): array
+    {
+        return ['catalog'];
+    }
+
     public function load(ObjectManager $manager): void
     {
         if ($manager->getRepository(ShopBooster::class)->count([]) > 0) {

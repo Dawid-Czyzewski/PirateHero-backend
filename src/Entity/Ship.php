@@ -15,7 +15,6 @@ use App\Controller\Ship\ShipNotificationsController;
 use App\Controller\Ship\ShipOverviewController;
 use App\Controller\Ship\ShipRosterController;
 use App\Controller\ShipsFightController;
-use App\Controller\WebSocketTokenController;
 use App\Repository\ShipRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -64,11 +63,6 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
         new Get(
             uriTemplate: '/ships/messages',
             controller: ShipChatController::class.'::getMessages',
-            security: "is_granted('IS_AUTHENTICATED_FULLY')",
-        ),
-        new Get(
-            uriTemplate: '/ships/chat/token',
-            controller: WebSocketTokenController::class.'::getShipChatToken',
             security: "is_granted('IS_AUTHENTICATED_FULLY')",
         ),
         new Post(

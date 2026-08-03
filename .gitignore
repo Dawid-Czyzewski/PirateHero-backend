@@ -29,3 +29,6 @@
 /.php-cs-fixer.php
 /.php-cs-fixer.cache
 ###< friendsofphp/php-cs-fixer ###
+
+# Production secrets prepared for upload (never commit)
+/deploy/backend.env.local

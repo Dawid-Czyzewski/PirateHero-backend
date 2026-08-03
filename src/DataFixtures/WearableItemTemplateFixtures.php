@@ -19,7 +19,7 @@ final class WearableItemTemplateFixtures extends Fixture implements FixtureGroup
 
     public static function getGroups(): array
     {
-        return ['core', 'items'];
+        return ['core', 'items', 'catalog'];
     }
 
     public function load(ObjectManager $manager): void

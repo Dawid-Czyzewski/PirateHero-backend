@@ -8,9 +8,6 @@ parameters:
     mailer_hidden_copy: '%env(default::MAILER_HIDDEN_COPY)%'
     mailer_from: '%env(default:mailer_from_default:MAILER_FROM)%'
     mailer_from_default: 'no-reply@famefighters.com'
-    websocket_jwt_secret: '%env(WEBSOCKET_JWT_SECRET)%'
-    default_websocket_url: 'http://localhost:9002'
-    websocket_url: '%env(default:default_websocket_url:WEBSOCKET_URL)%'
     bestiary_unlock_all_default: 'false'
 
 services:

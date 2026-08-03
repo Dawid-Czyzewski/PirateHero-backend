@@ -14,7 +14,7 @@ final class LevelFixtures extends Fixture implements FixtureGroupInterface
 {
     public static function getGroups(): array
     {
-        return ['core', 'levels'];
+        return ['core', 'levels', 'catalog'];
     }
 
     public function load(ObjectManager $manager): void

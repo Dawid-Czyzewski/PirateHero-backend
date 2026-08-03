@@ -27,6 +27,8 @@ final class ApiExceptionSubscriber implements EventSubscriberInterface
         private LoggerInterface $logger,
         #[Autowire('%kernel.environment%')]
         private string $environment,
+        #[Autowire('%kernel.debug%')]
+        private bool $debug,
     ) {
     }
 
@@ -102,11 +104,17 @@ final class ApiExceptionSubscriber implements EventSubscriberInterface
 
     private function resolveDetail(\Throwable $e, int $status): string
     {
-        if ($status >= Response::HTTP_INTERNAL_SERVER_ERROR && $this->environment === 'prod') {
+        // Hide internals in prod unless APP_DEBUG=1 (temporary diagnostics on shared hosting)
+        if ($status >= Response::HTTP_INTERNAL_SERVER_ERROR && $this->environment === 'prod' && !$this->debug) {
             return 'Internal server error';
         }
 
-        return $e->getMessage() !== '' ? $e->getMessage() : 'Error';
+        $msg = $e->getMessage() !== '' ? $e->getMessage() : 'Error';
+        if ($this->debug && $e->getPrevious() !== null && $e->getPrevious()->getMessage() !== '') {
+            $msg .= ' | '.$e->getPrevious()->getMessage();
+        }
+
+        return $msg;
     }
 
     private function buildDomainExtensions(\Throwable $e): array

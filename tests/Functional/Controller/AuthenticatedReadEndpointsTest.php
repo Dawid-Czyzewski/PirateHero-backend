@@ -28,7 +28,6 @@ final class AuthenticatedReadEndpointsTest extends ApiWebTestCase
         yield 'ShipNotificationsController::getUnreadNotificationsCount' => ['/api/ships/unread-notifications-count'];
         yield 'ShipEnrollmentController::getMyInvitations' => ['/api/ships/my-invitations'];
         yield 'ShipEnrollmentController::getMyJoinRequests' => ['/api/ships/my-join-requests'];
-        yield 'WebSocketTokenController::getShipChatToken' => ['/api/ships/chat/token?shipId=1'];
     }
 
     #[DataProvider('getCases')]

@@ -9,11 +9,17 @@ use App\Entity\Coupon;
 use App\Enum\CouponRewardType;
 use App\Enum\CouponType;
 use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
 
-class CouponFixtures extends Fixture implements DependentFixtureInterface
+class CouponFixtures extends Fixture implements DependentFixtureInterface, FixtureGroupInterface
 {
+    public static function getGroups(): array
+    {
+        return ['catalog'];
+    }
+
     public function getDependencies(): array
     {
         return [BoosterTemplateFixtures::class];

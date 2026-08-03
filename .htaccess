@@ -1,0 +1,17 @@
+# Symfony project root = public_html/api/
+AddType application/x-httpd-php83 .php
+Options -Indexes
+
+DirectoryIndex public/index.php
+
+RewriteEngine On
+RewriteBase /api/
+
+# Block sensitive paths from HTTP
+RewriteRule ^(\.env|bin|config|migrations|src|templates|tests|tools|var|vendor|composer\.(json|lock|phar)|deploy|openapi)(/|$) - [F,L]
+
+# Files under public/ are handled by public/.htaccess
+RewriteRule ^public/ - [L]
+
+# Everything else → front controller
+RewriteRule ^(.*)$ public/index.php [QSA,L]

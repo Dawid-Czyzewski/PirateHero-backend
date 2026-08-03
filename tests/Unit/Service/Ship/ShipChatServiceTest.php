@@ -9,7 +9,6 @@ use App\Entity\Ship;
 use App\Entity\ShipMessage;
 use App\Entity\User;
 use App\Repository\ShipMessageRepository;
-use App\Service\Ship\ShipChatNotifier;
 use App\Service\Ship\ShipChatService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Query;
@@ -18,13 +17,10 @@ use PHPUnit\Framework\TestCase;
 
 final class ShipChatServiceTest extends TestCase
 {
-    public function testAddMessagePersistsAndNotifies(): void
+    public function testAddMessagePersists(): void
     {
         $ship = (new Ship())->setTitle('C')->setDescription('d');
         $user = $this->makeUser();
-
-        $notifier = $this->createMock(ShipChatNotifier::class);
-        $notifier->expects(self::once())->method('publishMessage')->with(self::isInstanceOf(ShipMessage::class));
 
         $em = $this->createMock(EntityManagerInterface::class);
         $em->expects(self::once())->method('persist')->with(self::isInstanceOf(ShipMessage::class));
@@ -32,7 +28,7 @@ final class ShipChatServiceTest extends TestCase
 
         $repo = $this->createMock(ShipMessageRepository::class);
 
-        $service = new ShipChatService($em, $repo, $notifier);
+        $service = new ShipChatService($em, $repo);
         $message = $service->addMessage($ship, $user, ' hello ');
 
         self::assertSame(' hello ', $message->getContent());
@@ -59,7 +55,6 @@ final class ShipChatServiceTest extends TestCase
         $service = new ShipChatService(
             $this->createMock(EntityManagerInterface::class),
             $repo,
-            $this->createMock(ShipChatNotifier::class),
         );
 
         self::assertSame($expected, $service->getMessages($ship, 25));

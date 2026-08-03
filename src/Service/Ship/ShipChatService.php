@@ -15,14 +15,10 @@ class ShipChatService
     public function __construct(
         private EntityManagerInterface $entityManager,
         private ShipMessageRepository $shipMessageRepository,
-        private ShipChatNotifier $shipChatNotifier,
     ) {
     }
 
-    /**
-     * @param bool $notifySubscribers gdy `false`, nie wywołuje HTTP broadcast (używane z procesu Ratchet — tam emit jest in-process)
-     */
-    public function addMessage(Ship $ship, User $user, string $content, bool $notifySubscribers = true): ShipMessage
+    public function addMessage(Ship $ship, User $user, string $content): ShipMessage
     {
         $message = new ShipMessage();
         $message->setShip($ship);
@@ -31,13 +27,6 @@ class ShipChatService
 
         $this->entityManager->persist($message);
         $this->entityManager->flush();
-
-        if ($notifySubscribers) {
-            try {
-                $this->shipChatNotifier->publishMessage($message);
-            } catch (\Throwable) {
-            }
-        }
 
         return $message;
     }
@@ -57,11 +46,6 @@ class ShipChatService
 
         $this->entityManager->persist($message);
         $this->entityManager->flush();
-
-        try {
-            $this->shipChatNotifier->publishMessage($message);
-        } catch (\Throwable) {
-        }
 
         return $message;
     }
