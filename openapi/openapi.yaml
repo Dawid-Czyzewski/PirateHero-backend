@@ -1,0 +1,4331 @@
+# FameGame HTTP API (v1) — hand-maintained OpenAPI for product routes.
+# Covers custom ApiResource + Symfony #[Route] endpoints used by the game client.
+# Omits API Platform bare CRUD entity collections (fight_moves, store_slots, levels, …)
+# and docs/entrypoint plumbing. Interactive fallback: GET /api/docs
+
+openapi: 3.1.0
+info:
+  title: FameGame API
+  version: "1.0.0"
+  license:
+    name: Proprietary
+  description: |
+    Product HTTP contracts for FameGameBackend.
+
+    Success payloads use an envelope:
+    `{ "data": <payload>, "meta": { "message": string|null } }`.
+
+    Errors use RFC 7807 `application/problem+json`.
+    Most `/api/*` routes require JWT (`Authorization: Bearer <token>`).
+    Public auth routes set `security: []`.
+
+servers:
+  - url: /api
+    description: API prefix
+
+tags:
+  - name: Auth
+    description: "Login, register, password reset, token refresh"
+  - name: Users
+    description: "Profile, titles, coupons, skill points"
+  - name: Refills
+    description: "Energy, fight and training point refills"
+  - name: Rankings
+    description: Player and ship leaderboards
+  - name: GameShop
+    description: Composite shop / inventory / equip API
+  - name: UserStore
+    description: Legacy store endpoints (prefer GameShop)
+  - name: Equipment
+    description: Equip / unequip / storage move
+  - name: Fights
+    description: PvP duels
+  - name: ShipFights
+    description: Ship vs ship combat
+  - name: Ships
+    description: "Ship management, chat, invitations"
+  - name: Activities
+    description: "Missions, works, trainings"
+  - name: Boosters
+    description: Combat and shop boosters
+  - name: Premium
+    description: Mock premium diamond packs
+  - name: Dungeons
+    description: Dungeons and bestiary
+  - name: Quests
+    description: Quest list and claims
+  - name: DailyRewards
+    description: Daily login rewards
+  - name: Games
+    description: Mini-games
+
+security:
+  - bearerAuth: []
+
+paths:
+  /ships/fights/{fightId}:
+    get:
+      operationId: shipFightDetails
+      tags: [ShipFights]
+      summary: Ship fight details
+      parameters:
+        - name: fightId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/ShipsFightDetails"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/fights/can-start:
+    get:
+      operationId: shipFightCanStart
+      tags: [ShipFights]
+      summary: Daily ship-fight eligibility
+      responses:
+        200:
+          description: Eligibility
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/CanStartResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/fights/history:
+    get:
+      operationId: shipFightHistory
+      tags: [ShipFights]
+      summary: Ship fight history
+      responses:
+        200:
+          description: History
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/fights/opponents:
+    get:
+      operationId: shipFightOpponents
+      tags: [ShipFights]
+      summary: List ship fight opponents
+      responses:
+        200:
+          description: Opponents
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/fights/start:
+    post:
+      operationId: startShipFight
+      tags: [ShipFights]
+      summary: Start a ship fight
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [opponentShipId]
+              properties:
+                opponentShipId:
+                  type: string
+      responses:
+        200:
+          description: Fight result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /account/change-password:
+    post:
+      operationId: changePassword
+      tags: [Auth]
+      summary: Change password for authenticated user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword, newPasswordRepeat]
+              properties:
+                currentPassword:
+                  type: string
+                newPassword:
+                  type: string
+                  minLength: 6
+                newPasswordRepeat:
+                  type: string
+                  minLength: 6
+      responses:
+        200:
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/ChangedResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /boosters/available:
+    get:
+      operationId: availableBoosters
+      tags: [Boosters]
+      summary: Boosters available to buy/use
+      responses:
+        200:
+          description: List
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /boosters/buy:
+    post:
+      operationId: buyBooster
+      tags: [Boosters]
+      summary: Buy a booster
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userAvailableBoosterId]
+              properties:
+                userAvailableBoosterId:
+                  type: integer
+      responses:
+        200:
+          description: Purchased
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/PurchasedResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /boosters/use:
+    post:
+      operationId: useBooster
+      tags: [Boosters]
+      summary: Activate owned booster
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userBoosterId]
+              properties:
+                userBoosterId:
+                  type: integer
+      responses:
+        200:
+          description: Used
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/UsedResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /coupons/history:
+    get:
+      operationId: couponHistory
+      tags: [Users]
+      summary: Coupon redemption history
+      responses:
+        200:
+          description: History
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/CouponHistoryResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /coupons/redeem:
+    post:
+      operationId: redeemCoupon
+      tags: [Users]
+      summary: Redeem a coupon code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+      responses:
+        200:
+          description: Redeemed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RedeemCouponResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /game-shop/equip:
+    post:
+      operationId: gameShopEquip
+      tags: [GameShop]
+      summary: Equip inventory item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itemId]
+              properties:
+                itemId:
+                  type: integer
+      responses:
+        200:
+          description: Equipped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /game-shop/purchase:
+    post:
+      operationId: gameShopPurchase
+      tags: [GameShop]
+      summary: Buy item from shop slot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [storeSlotId]
+              properties:
+                storeSlotId:
+                  type: integer
+                chestSlotIndex:
+                  type: integer
+      responses:
+        200:
+          description: Purchased
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /game-shop/refresh:
+    post:
+      operationId: gameShopRefresh
+      tags: [GameShop]
+      summary: Refresh shop offers
+      responses:
+        200:
+          description: Refreshed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /game-shop/sell:
+    post:
+      operationId: gameShopSell
+      tags: [GameShop]
+      summary: Sell inventory item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [storageSlotId]
+              properties:
+                storageSlotId:
+                  type: integer
+      responses:
+        200:
+          description: Sold
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /game-shop/sell-equipped:
+    post:
+      operationId: gameShopSellEquipped
+      tags: [GameShop]
+      summary: Sell currently equipped item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [slotType]
+              properties:
+                slotType:
+                  type: string
+                  enum: [helmet, weapon, armor, shield, gloves, boots, amulet, ring, potions]
+      responses:
+        200:
+          description: Sold
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /game-shop/state:
+    get:
+      operationId: gameShopState
+      tags: [GameShop]
+      summary: "Full shop, inventory and equipped state"
+      responses:
+        200:
+          description: State
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/GameShopState"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /games/coin-flip/play:
+    post:
+      operationId: coinFlipPlay
+      tags: [Games]
+      summary: Play coin-flip mini-game
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [stake, choice]
+              properties:
+                stake:
+                  type: integer
+                  minimum: 1
+                choice:
+                  type: string
+                  enum: [heads, tails]
+      responses:
+        200:
+          description: Result
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/CoinFlipPlayResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /login:
+    post:
+      operationId: login
+      tags: [Auth]
+      summary: Login and receive JWT + refresh token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        200:
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/LoginResult"
+        401:
+          description: Invalid credentials
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /password-reset/complete:
+    post:
+      operationId: passwordResetComplete
+      tags: [Auth]
+      summary: Complete password reset
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, newPassword, newPasswordRepeat]
+              properties:
+                token:
+                  type: string
+                newPassword:
+                  type: string
+                  minLength: 6
+                newPasswordRepeat:
+                  type: string
+                  minLength: 6
+      responses:
+        200:
+          description: Password reset
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/PasswordResetCompleteResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /password-reset/request:
+    post:
+      operationId: passwordResetRequest
+      tags: [Auth]
+      summary: Request password reset email
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        200:
+          description: Request accepted
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/PasswordResetRequestResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /rankings/players:
+    get:
+      operationId: rankingsPlayers
+      tags: [Rankings]
+      summary: Paginated player ranking
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            default: DESC
+            enum: [ASC, DESC]
+        - name: search
+          in: query
+          description: Optional search filter
+          schema:
+            type: string
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            default: famePoints
+            enum: [username, level, famePoints]
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/PlayersRankingData"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /rankings/ships:
+    get:
+      operationId: rankingsShips
+      tags: [Rankings]
+      summary: Paginated ship ranking
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            default: DESC
+            enum: [ASC, DESC]
+        - name: search
+          in: query
+          description: Optional search filter
+          schema:
+            type: string
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            default: totalFamePoints
+            enum: [title, memberCount, totalFamePoints]
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/ShipsRankingData"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /register:
+    post:
+      operationId: register
+      tags: [Auth]
+      summary: Register a new user account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRegisterInput"
+      responses:
+        201:
+          description: Registered
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RegisteredResult"
+        422:
+          description: Validation error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/accept-invitation:
+    post:
+      operationId: acceptShipInvitation
+      tags: [Ships]
+      summary: Accept invitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [invitationId]
+              properties:
+                invitationId:
+                  type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/approve-join-request:
+    post:
+      operationId: approveJoinRequest
+      tags: [Ships]
+      summary: Approve join request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [requestId]
+              properties:
+                requestId:
+                  type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/ApprovedResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/cancel-invitation:
+    post:
+      operationId: cancelInvitation
+      tags: [Ships]
+      summary: Cancel outgoing invitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId]
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/CancelledResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/cancel-join-request:
+    post:
+      operationId: cancelJoinRequest
+      tags: [Ships]
+      summary: Cancel own join request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [shipId]
+              properties:
+                shipId:
+                  type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/CancelledResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/change-member-role:
+    post:
+      operationId: changeShipMemberRole
+      tags: [Ships]
+      summary: Change member role
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, role]
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+                role:
+                  type: string
+                  enum: [OWNER, MANAGER, MEMBER]
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/chat/token:
+    get:
+      operationId: shipChatToken
+      tags: [Ships]
+      summary: Chat subscriber token
+      parameters:
+        - name: shipId
+          in: query
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/ChatToken"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/create:
+    post:
+      operationId: createShip
+      tags: [Ships]
+      summary: Create a ship
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              properties:
+                title:
+                  type: string
+                  maxLength: 255
+                description:
+                  type: ["string", "null"]
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/ShipCreated"
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/ShipCreated"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/decline-invitation:
+    post:
+      operationId: declineShipInvitation
+      tags: [Ships]
+      summary: Decline invitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [invitationId]
+              properties:
+                invitationId:
+                  type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/DeclinedResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/delete:
+    post:
+      operationId: deleteShip
+      tags: [Ships]
+      summary: Delete own ship
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/DeletedResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/deposit:
+    post:
+      operationId: depositToShip
+      tags: [Ships]
+      summary: Deposit gold/diamonds to ship
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                gold:
+                  type: integer
+                  minimum: 0
+                diamonds:
+                  type: integer
+                  minimum: 0
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/invite-member:
+    post:
+      operationId: inviteShipMember
+      tags: [Ships]
+      summary: Invite member by username
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username]
+              properties:
+                username:
+                  type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/join:
+    post:
+      operationId: joinShip
+      tags: [Ships]
+      summary: Join open ship
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [shipId]
+              properties:
+                shipId:
+                  type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/leave:
+    post:
+      operationId: leaveShip
+      tags: [Ships]
+      summary: Leave current ship
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/LeftResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/mark-fight-notification-read:
+    post:
+      operationId: markFightNotificationRead
+      tags: [Ships]
+      summary: Mark fight notification read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [notificationId]
+              properties:
+                notificationId:
+                  type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/UpdatedResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/mark-invitation-read:
+    post:
+      operationId: markInvitationRead
+      tags: [Ships]
+      summary: Mark invitation as read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [invitationId]
+              properties:
+                invitationId:
+                  type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/UpdatedResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/mark-join-request-read:
+    post:
+      operationId: markJoinRequestRead
+      tags: [Ships]
+      summary: Mark join request as read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [requestId]
+              properties:
+                requestId:
+                  type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/UpdatedResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/mark-removal-notification-read:
+    post:
+      operationId: markRemovalNotificationRead
+      tags: [Ships]
+      summary: Mark removal notification read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [notificationId]
+              properties:
+                notificationId:
+                  type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/UpdatedResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/messages:
+    get:
+      operationId: listShipMessages
+      tags: [Ships]
+      summary: List recent ship chat messages
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/ShipMessages"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/my-fight-notifications:
+    get:
+      operationId: myFightNotifications
+      tags: [Ships]
+      summary: Ship fight notifications
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/my-invitations:
+    get:
+      operationId: myShipInvitations
+      tags: [Ships]
+      summary: Incoming ship invitations
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/my-join-requests:
+    get:
+      operationId: myJoinRequests
+      tags: [Ships]
+      summary: Join requests for my ship
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/my-removal-notifications:
+    get:
+      operationId: myRemovalNotifications
+      tags: [Ships]
+      summary: Ship removal notifications
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/my-ship:
+    get:
+      operationId: getMyShip
+      tags: [Ships]
+      summary: "Current user's ship data"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/MyShipData"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/reject-join-request:
+    post:
+      operationId: rejectJoinRequest
+      tags: [Ships]
+      summary: Reject join request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [requestId]
+              properties:
+                requestId:
+                  type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RejectedResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/remove-member:
+    post:
+      operationId: removeShipMember
+      tags: [Ships]
+      summary: Remove ship member
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId]
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/request-to-join:
+    post:
+      operationId: requestToJoinShip
+      tags: [Ships]
+      summary: Request to join ship
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [shipId]
+              properties:
+                shipId:
+                  type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/search-users:
+    get:
+      operationId: searchUsersForShip
+      tags: [Ships]
+      summary: Search users to invite
+      parameters:
+        - name: username
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/send-message:
+    post:
+      operationId: sendShipMessage
+      tags: [Ships]
+      summary: Send ship chat message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/set-invitation-required:
+    post:
+      operationId: setShipInvitationRequired
+      tags: [Ships]
+      summary: Toggle invitation requirement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [shipId, requiresInvitation]
+              properties:
+                shipId:
+                  type: string
+                requiresInvitation:
+                  type: boolean
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/transfer-ownership:
+    post:
+      operationId: transferShipOwnership
+      tags: [Ships]
+      summary: Transfer ship ownership
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId]
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/TransferredResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/unread-notifications-count:
+    get:
+      operationId: shipUnreadNotificationsCount
+      tags: [Ships]
+      summary: Unread ship notifications count
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/UnreadCount"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/update:
+    post:
+      operationId: updateShip
+      tags: [Ships]
+      summary: Update ship details
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  maxLength: 255
+                description:
+                  type: ["string", "null"]
+                internalNotes:
+                  type: ["string", "null"]
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/upgrade:
+    post:
+      operationId: upgradeShip
+      tags: [Ships]
+      summary: Upgrade ship
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [upgradeType]
+              properties:
+                upgradeType:
+                  type: string
+                  enum: [skills, work, missions, hull]
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /shop-boosters/catalog:
+    get:
+      operationId: shopBoostersCatalog
+      tags: [Boosters]
+      summary: Timed shop-booster catalog
+      responses:
+        200:
+          description: Catalog
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /shop-boosters/prune-expired:
+    post:
+      operationId: pruneExpiredShopBoosters
+      tags: [Boosters]
+      summary: Prune expired shop-booster sessions
+      responses:
+        200:
+          description: Pruned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /shop-boosters/purchase:
+    post:
+      operationId: purchaseShopBooster
+      tags: [Boosters]
+      summary: Purchase timed shop booster
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [boosterId]
+              properties:
+                boosterId:
+                  type: string
+      responses:
+        200:
+          description: Purchased
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /token/refresh:
+    post:
+      operationId: refreshToken
+      tags: [Auth]
+      summary: Refresh access JWT
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        200:
+          description: New access token
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/TokenRefreshResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /user_quests:
+    get:
+      operationId: listQuests
+      tags: [Quests]
+      summary: List user quests
+      responses:
+        200:
+          description: Quests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /user_titles:
+    get:
+      operationId: listUserTitles
+      tags: [Users]
+      summary: List titles available to the user
+      responses:
+        200:
+          description: Titles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /user_titles/equip:
+    post:
+      operationId: equipTitle
+      tags: [Users]
+      summary: Equip a title
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [titleCode]
+              properties:
+                titleCode:
+                  type: string
+      responses:
+        200:
+          description: Equipped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /user-store/buy-item:
+    post:
+      operationId: userStoreBuyItem
+      tags: [UserStore]
+      summary: Buy from store slot (legacy)
+      deprecated: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [storeSlotId]
+              properties:
+                storeSlotId:
+                  type: integer
+                chestSlotIndex:
+                  type: integer
+      responses:
+        200:
+          description: Purchased
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /user-store/refresh:
+    post:
+      operationId: userStoreRefresh
+      tags: [UserStore]
+      summary: Refresh store (legacy)
+      deprecated: true
+      responses:
+        200:
+          description: Refreshed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RefreshedResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /user-store/sell-item:
+    post:
+      operationId: userStoreSellItem
+      tags: [UserStore]
+      summary: Sell storage item (legacy)
+      deprecated: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [storageSlotId]
+              properties:
+                storageSlotId:
+                  type: integer
+      responses:
+        200:
+          description: Sold
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /users/bestiary/entries:
+    get:
+      operationId: bestiaryEntries
+      tags: [Dungeons]
+      summary: Bestiary entries
+      responses:
+        200:
+          description: Entries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /users/daily-rewards/claim:
+    post:
+      operationId: claimDailyReward
+      tags: [DailyRewards]
+      summary: "Claim today's daily reward"
+      responses:
+        200:
+          description: Claimed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /users/daily-rewards/status:
+    get:
+      operationId: dailyRewardsStatus
+      tags: [DailyRewards]
+      summary: Daily reward streak/status
+      responses:
+        200:
+          description: Status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /users/dungeons/fight:
+    post:
+      operationId: dungeonFight
+      tags: [Dungeons]
+      summary: Fight a dungeon stage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [dungeonId, stage]
+              properties:
+                dungeonId:
+                  type: string
+                  enum: [krypta, kraken, forteca, wulkan, palac]
+                stage:
+                  type: integer
+                  minimum: 1
+      responses:
+        200:
+          description: Fight result
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/DungeonFightStage"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /users/dungeons/progress:
+    get:
+      operationId: dungeonProgress
+      tags: [Dungeons]
+      summary: Dungeon progress and player stats
+      responses:
+        200:
+          description: Progress
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/DungeonProgress"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /users/energy/refill:
+    post:
+      operationId: refillEnergy
+      tags: [Refills]
+      summary: Spend gold to refill energy points (max 2/day)
+      responses:
+        200:
+          description: Refilled
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/EnergyRefillResult"
+        403:
+          description: Rule violation
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /users/energy/refill/info:
+    get:
+      operationId: refillEnergyInfo
+      tags: [Refills]
+      summary: Energy refill eligibility and next cost
+      responses:
+        200:
+          description: Status
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RefillInfo"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /users/fight/refill:
+    post:
+      operationId: refillFight
+      tags: [Refills]
+      summary: Spend gold to refill fight points (max 2/day)
+      responses:
+        200:
+          description: Refilled
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/FightRefillResult"
+        403:
+          description: Rule violation
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /users/fight/refill/info:
+    get:
+      operationId: refillFightInfo
+      tags: [Refills]
+      summary: Fight refill eligibility and next cost
+      responses:
+        200:
+          description: Status
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RefillInfo"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /users/fights/history:
+    get:
+      operationId: fightHistory
+      tags: [Fights]
+      summary: Duel history
+      responses:
+        200:
+          description: History
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /users/fights/opponents:
+    get:
+      operationId: fightOpponents
+      tags: [Fights]
+      summary: List duel opponents
+      responses:
+        200:
+          description: Opponents
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /users/fights/start:
+    post:
+      operationId: startFight
+      tags: [Fights]
+      summary: Start a PvP duel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [opponentId]
+              properties:
+                opponentId:
+                  type: string
+      responses:
+        200:
+          description: Fight result
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/FightStartResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /users/premium-shop/catalog:
+    get:
+      operationId: premiumShopCatalog
+      tags: [Premium]
+      summary: Premium diamond pack catalog
+      responses:
+        200:
+          description: Catalog
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /users/premium-shop/purchase:
+    post:
+      operationId: premiumShopPurchase
+      tags: [Premium]
+      summary: Purchase premium diamond pack (mock — no real payment)
+      description: |
+        Development/mock endpoint. Credits diamonds immediately without charging a payment provider.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [packId]
+              properties:
+                packId:
+                  type: string
+      responses:
+        200:
+          description: Purchased
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /users/premium-shop/transactions:
+    get:
+      operationId: premiumShopTransactions
+      tags: [Premium]
+      summary: Premium shop transaction history
+      responses:
+        200:
+          description: Transactions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /users/training/refill:
+    post:
+      operationId: refillTraining
+      tags: [Refills]
+      summary: Spend gold to refill training points (max 2/day)
+      responses:
+        200:
+          description: Refilled
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/TrainingRefillResult"
+        403:
+          description: Rule violation
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /users/training/refill/info:
+    get:
+      operationId: refillTrainingInfo
+      tags: [Refills]
+      summary: Training refill eligibility and next cost
+      responses:
+        200:
+          description: Status
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RefillInfo"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /activate-account/{token}:
+    get:
+      operationId: activateAccount
+      tags: [Auth]
+      summary: Activate account via email token
+      security: []
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Activated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/ActivatedResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /missions/{id}/cancel:
+    post:
+      operationId: cancelMission
+      tags: [Activities]
+      summary: Cancel mission
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/MissionCancelledResult"
+        403:
+          description: Ownership / rule violation
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /missions/{id}/complete:
+    post:
+      operationId: completeMission
+      tags: [Activities]
+      summary: Complete mission
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/MissionCompleteResult"
+        403:
+          description: Ownership / rule violation
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /missions/{id}/start:
+    post:
+      operationId: startMission
+      tags: [Activities]
+      summary: Start mission
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/MissionStartedResult"
+        403:
+          description: Ownership / rule violation
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /ships/{id}/preview:
+    get:
+      operationId: getShipPreview
+      tags: [Ships]
+      summary: Ship preview
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/ShipPreview"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /storage/{id}/move-item/{fromSlot}/{toSlot}:
+    post:
+      operationId: moveStorageItem
+      tags: [Equipment]
+      summary: Move item between storage slots
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: fromSlot
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: toSlot
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Moved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/MovedResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /trainings/{id}/cancel:
+    post:
+      operationId: cancelTraining
+      tags: [Activities]
+      summary: Cancel training
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/TrainingCancelledResult"
+        403:
+          description: Ownership / rule violation
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /trainings/{id}/complete:
+    post:
+      operationId: completeTraining
+      tags: [Activities]
+      summary: Complete training
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/TrainingListResult"
+        403:
+          description: Ownership / rule violation
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /trainings/{id}/start:
+    post:
+      operationId: startTraining
+      tags: [Activities]
+      summary: Start training
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/TrainingStartedResult"
+        403:
+          description: Ownership / rule violation
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /user_equipments/{id}/equip:
+    post:
+      operationId: equipItem
+      tags: [Equipment]
+      summary: Equip item onto equipment resource
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itemId]
+              properties:
+                itemId:
+                  type: integer
+      responses:
+        200:
+          description: Equipped
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/EquippedResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /user_equipments/{id}/unequip:
+    post:
+      operationId: unequipItem
+      tags: [Equipment]
+      summary: Unequip a slot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [slotType]
+              properties:
+                slotType:
+                  type: string
+      responses:
+        200:
+          description: Unequipped
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/UnequippedResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /user_quests/{id}/claim-reward:
+    post:
+      operationId: claimQuestReward
+      tags: [Quests]
+      summary: Claim quest reward
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Claimed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /user-store/by-user/{id}:
+    get:
+      operationId: userStoreByUser
+      tags: [UserStore]
+      summary: "Fetch authenticated user's store (ownership enforced)"
+      deprecated: true
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User id; must match JWT subject
+          schema:
+            type: string
+      responses:
+        200:
+          description: Store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        403:
+          description: storeAccessDenied
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /users/{id}:
+    get:
+      operationId: getUser
+      tags: [Users]
+      summary: Get full user profile (self or admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /users/{id}/add-skill-point:
+    post:
+      operationId: addSkillPoint
+      tags: [Users]
+      summary: Spend a free skill point on a stat
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [stat]
+              properties:
+                stat:
+                  type: string
+                  enum: [STRENGTH, AGILITY, INTELLIGENCE, ENDURANCE, LUCK]
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/UpdatedResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /users/{id}/preview:
+    get:
+      operationId: getUserPreview
+      tags: [Users]
+      summary: Get user preview card
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Preview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiEnvelope"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /users/fights/replay/{fightId}:
+    get:
+      operationId: fightReplay
+      tags: [Fights]
+      summary: Replay a duel
+      parameters:
+        - name: fightId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Replay
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/FightReplayResult"
+        401:
+          description: Unauthenticated / invalid JWT
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Forbidden / business rule
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /works/{id}/cancel:
+    post:
+      operationId: cancelWork
+      tags: [Activities]
+      summary: Cancel work
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/WorkCancelledResult"
+        403:
+          description: Ownership / rule violation
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /works/{id}/complete:
+    post:
+      operationId: completeWork
+      tags: [Activities]
+      summary: Complete work
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/WorkCompleteResult"
+        403:
+          description: Ownership / rule violation
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /works/{id}/start:
+    post:
+      operationId: startWork
+      tags: [Activities]
+      summary: Start work
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/WorkStartedResult"
+        403:
+          description: Ownership / rule violation
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ApiEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          description: Endpoint-specific success payload
+          additionalProperties: true
+        meta:
+          type: object
+          properties:
+            message:
+              type: ["string", "null"]
+    ProblemJson:
+      type: object
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        violations:
+          type: array
+          items:
+            type: object
+            properties:
+              propertyPath:
+                type: string
+              message:
+                type: string
+    UserRegisterInput:
+      type: object
+      required: [email, password, passwordRepeat, username, rulesAccepted, avatarName]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        passwordRepeat:
+          type: string
+          minLength: 6
+        username:
+          type: string
+          minLength: 3
+          maxLength: 30
+          pattern: "^[a-zA-Z0-9_.-]+$"
+        rulesAccepted:
+          type: boolean
+        avatarName:
+          type: string
+          minLength: 2
+          maxLength: 64
+          pattern: "^[a-z0-9_-]+$"
+    LoginResult:
+      type: object
+      properties:
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+            roles:
+              type: array
+              items:
+                type: string
+        token:
+          type: string
+        refresh_token:
+          type: string
+    RegisteredResult:
+      type: object
+      properties:
+        registered:
+          type: boolean
+    ActivatedResult:
+      type: object
+      properties:
+        activated:
+          type: boolean
+    TokenRefreshResult:
+      type: object
+      properties:
+        token:
+          type: string
+    PasswordResetRequestResult:
+      type: object
+      properties:
+        sent:
+          type: boolean
+    PasswordResetCompleteResult:
+      type: object
+      properties:
+        reset:
+          type: boolean
+    ChangedResult:
+      type: object
+      properties:
+        changed:
+          type: boolean
+    UpdatedResult:
+      type: object
+      properties:
+        updated:
+          type: boolean
+    PurchasedResult:
+      type: object
+      properties:
+        purchased:
+          type: boolean
+    UsedResult:
+      type: object
+      properties:
+        used:
+          type: boolean
+    RefreshedResult:
+      type: object
+      properties:
+        refreshed:
+          type: boolean
+    EquippedResult:
+      type: object
+      properties:
+        equipped:
+          type: boolean
+    UnequippedResult:
+      type: object
+      properties:
+        unequipped:
+          type: boolean
+    MovedResult:
+      type: object
+      properties:
+        moved:
+          type: boolean
+    DeletedResult:
+      type: object
+      properties:
+        deleted:
+          type: boolean
+    LeftResult:
+      type: object
+      properties:
+        left:
+          type: boolean
+    TransferredResult:
+      type: object
+      properties:
+        transferred:
+          type: boolean
+    CancelledResult:
+      type: object
+      properties:
+        cancelled:
+          type: boolean
+    DeclinedResult:
+      type: object
+      properties:
+        declined:
+          type: boolean
+    ApprovedResult:
+      type: object
+      properties:
+        approved:
+          type: boolean
+    RejectedResult:
+      type: object
+      properties:
+        rejected:
+          type: boolean
+    CanStartResult:
+      type: object
+      properties:
+        canStart:
+          type: boolean
+    UnreadCount:
+      type: object
+      properties:
+        unreadCount:
+          type: integer
+    RankingPagination:
+      type: object
+      required: [page, limit, total, totalPages]
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+    PlayerRankingEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        famePoints:
+          type: integer
+        experiencePoints:
+          type: integer
+        level:
+          type: ["object", "null"]
+          properties:
+            id:
+              description: Level identifier
+            name:
+              type: string
+        ship:
+          type: ["object", "null"]
+        equippedTitle:
+          type: ["object", "null"]
+    ShipRankingEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        totalFamePoints:
+          type: integer
+        memberCount:
+          type: integer
+        memberIds:
+          type: array
+          items:
+            type: string
+        requiresInvitation:
+          type: boolean
+        maxMembers:
+          type: integer
+        captainUsername:
+          type: ["string", "null"]
+    PlayersRankingData:
+      type: object
+      required: [items, pagination]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerRankingEntry"
+        pagination:
+          $ref: "#/components/schemas/RankingPagination"
+    ShipsRankingData:
+      type: object
+      required: [items, pagination]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShipRankingEntry"
+        pagination:
+          $ref: "#/components/schemas/RankingPagination"
+    RefillInfo:
+      type: object
+      properties:
+        canRefill:
+          type: boolean
+        refillsUsed:
+          type: integer
+        refillsRemaining:
+          type: integer
+        cost:
+          type: integer
+        maxDailyRefills:
+          type: integer
+    EnergyRefillResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        newEnergy:
+          type: integer
+        newGold:
+          type: integer
+        refillsUsed:
+          type: integer
+        refillsRemaining:
+          type: integer
+        cost:
+          type: integer
+    FightRefillResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        newFightPoints:
+          type: integer
+        newGold:
+          type: integer
+        refillsUsed:
+          type: integer
+        refillsRemaining:
+          type: integer
+        maxDailyRefills:
+          type: integer
+        cost:
+          type: integer
+    TrainingRefillResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        newTrainingPoints:
+          type: integer
+        newGold:
+          type: integer
+        refillsUsed:
+          type: integer
+        refillsRemaining:
+          type: integer
+        cost:
+          type: integer
+    GameShopRefresh:
+      type: object
+      properties:
+        isFreeRefreshAvailable:
+          type: boolean
+        refreshCost:
+          type: integer
+    GameShopState:
+      type: object
+      properties:
+        gold:
+          type: integer
+        shop:
+          type: array
+          items:
+            type: ["object", "null"]
+        inventory:
+          type: array
+          items:
+            type: ["object", "null"]
+        equipped:
+          type: object
+          additionalProperties:
+            type: ["object", "null"]
+        refresh:
+          $ref: "#/components/schemas/GameShopRefresh"
+    FightMove:
+      type: object
+      properties:
+        moveNumber:
+          type: integer
+        player:
+          type: object
+          properties:
+            id:
+              description: Player id
+            username:
+              type: string
+        result:
+          type: string
+        damage:
+          type: integer
+        attackerHealthAfter:
+          type: integer
+        defenderHealthAfter:
+          type: integer
+    FightStartResult:
+      type: object
+      properties:
+        fightId:
+          type: integer
+        result:
+          type: string
+        attackerScore:
+          type: integer
+        defenderScore:
+          type: integer
+        famePointsChange:
+          type: integer
+        duelPointsSpent:
+          type: integer
+        playerId:
+          description: Attacker user id
+        opponentId:
+          description: Defender user id
+        attackerUsername:
+          type: string
+        moves:
+          type: array
+          items:
+            $ref: "#/components/schemas/FightMove"
+        attackerStats:
+          type: object
+          additionalProperties:
+            type: integer
+        defenderStats:
+          type: object
+          additionalProperties:
+            type: integer
+        opponent:
+          type: object
+        opponents:
+          type: array
+          items:
+            type: object
+    FightReplayResult:
+      type: object
+      properties:
+        fightId:
+          description: Fight id
+        viewerWasAttacker:
+          type: boolean
+        resultForViewer:
+          type: string
+        famePointsChangeForViewer:
+          type: integer
+        attacker:
+          type: object
+        defender:
+          type: object
+        attackerMaxHp:
+          type: integer
+        defenderMaxHp:
+          type: integer
+        moves:
+          type: array
+          items:
+            $ref: "#/components/schemas/FightMove"
+    ShipsFightDetails:
+      type: object
+      properties:
+        fightId:
+          description: Ship fight id
+        result:
+          type: string
+        attackerShip:
+          type: object
+        defenderShip:
+          type: object
+        attackerMembers:
+          type: array
+          items:
+            type: object
+        defenderMembers:
+          type: array
+          items:
+            type: object
+        moves:
+          type: array
+          items:
+            type: object
+    ShipSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        famePoints:
+          type: integer
+        memberCount:
+          type: integer
+        maxMembers:
+          type: integer
+        requiresInvitation:
+          type: boolean
+    ShipMessage:
+      type: object
+      properties:
+        id:
+          description: Message id
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        author:
+          type: object
+    MyShipData:
+      type: object
+      properties:
+        shipUpgradePricing:
+          type: object
+        ship:
+          $ref: "#/components/schemas/ShipSummary"
+        member:
+          type: ["object", "null"]
+        members:
+          type: array
+          items:
+            type: object
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShipMessage"
+    ShipPreview:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        famePoints:
+          type: integer
+        memberCount:
+          type: integer
+        maxMembers:
+          type: integer
+        requiresInvitation:
+          type: boolean
+        captainUsername:
+          type: ["string", "null"]
+    ShipCreated:
+      type: object
+      properties:
+        ship:
+          $ref: "#/components/schemas/ShipSummary"
+    ShipMessages:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShipMessage"
+    ChatToken:
+      type: object
+      properties:
+        token:
+          type: string
+        topic:
+          type: string
+        expiresAt:
+          type: integer
+    MissionStartedResult:
+      type: object
+      properties:
+        started:
+          type: boolean
+    MissionCancelledResult:
+      type: object
+      properties:
+        cancelled:
+          type: boolean
+    MissionCompleteResult:
+      type: object
+      properties:
+        missions:
+          type: array
+          items:
+            type: object
+        earnedGold:
+          type: integer
+        earnedExp:
+          type: integer
+        bonusPercent:
+          type: integer
+        newLevel:
+          type: ["object", "null"]
+    WorkStartedResult:
+      type: object
+      properties:
+        started:
+          type: boolean
+    WorkCancelledResult:
+      type: object
+      properties:
+        cancelled:
+          type: boolean
+    WorkCompleteResult:
+      type: object
+      properties:
+        earnedGold:
+          type: integer
+        bonusPercent:
+          type: integer
+        works:
+          type: array
+          items:
+            type: object
+    TrainingStartedResult:
+      type: object
+      properties:
+        started:
+          type: boolean
+    TrainingCancelledResult:
+      type: object
+      properties:
+        cancelled:
+          type: boolean
+    TrainingListResult:
+      type: object
+      properties:
+        trainings:
+          type: array
+          items:
+            type: object
+    DungeonProgress:
+      type: object
+      properties:
+        progress:
+          type: object
+          additionalProperties:
+            type: integer
+        playerStats:
+          type: object
+    DungeonFightStage:
+      type: object
+      properties:
+        won:
+          type: boolean
+        logs:
+          type: array
+          items:
+            type: object
+        playerMaxHp:
+          type: integer
+        opponentMaxHp:
+          type: integer
+        fameEarned:
+          type: integer
+        famePointsChange:
+          type: integer
+        progress:
+          type: object
+          additionalProperties:
+            type: integer
+        opponent:
+          type: object
+        rewards:
+          type: object
+          properties:
+            gold:
+              type: integer
+            exp:
+              type: integer
+        completionReward:
+          type: ["object", "null"]
+        dungeonCompleted:
+          type: boolean
+        rewardItem:
+          type: ["object", "null"]
+        updatedUser:
+          type: ["object", "null"]
+    CoinFlipPlayResult:
+      type: object
+      properties:
+        won:
+          type: boolean
+        outcome:
+          type: string
+          enum: [heads, tails]
+        diamondsAfter:
+          type: integer
+        payoutDiamonds:
+          type: integer
+    RedeemCouponResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        history:
+          type: array
+          items:
+            type: object
+    CouponHistoryResult:
+      type: object
+      properties:
+        history:
+          type: array
+          items:
+            type: object

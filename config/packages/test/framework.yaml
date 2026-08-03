@@ -1,0 +1,8 @@
+framework:
+    test: true
+    profiler:
+        collect: false
+    php_errors:
+        log: true
+    session:
+        storage_factory_id: session.storage.factory.mock_file

@@ -1,0 +1,18 @@
+api_platform:
+    graphql:
+        enabled: false
+    title: 'Hello API Platform'
+    version: '1.0.0'
+    defaults:
+        stateless: true
+        cache_headers:
+            vary: ['Content-Type', 'Authorization', 'Origin']
+    enable_docs: true
+    enable_swagger_ui: true
+    enable_re_doc: true
+    description: 'Fame Fighters API'
+    swagger:
+        api_keys:
+            JWT:
+                name: Authorization
+                type: header

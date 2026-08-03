@@ -1,0 +1,12 @@
+lexik_jwt_authentication:
+    secret_key: '%env(JWT_SECRET_STRING)%'
+    public_key: '%env(JWT_SECRET_STRING)%'
+    pass_phrase: ''
+    user_id_claim: email
+    encoder:
+        signature_algorithm: HS256
+
+    api_platform:
+        check_path: /api/login
+        username_path: email
+        password_path: password

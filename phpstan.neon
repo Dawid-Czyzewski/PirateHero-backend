@@ -1,0 +1,16 @@
+includes:
+    - vendor/phpstan/phpstan-symfony/extension.neon
+    - vendor/phpstan/phpstan-doctrine/extension.neon
+
+parameters:
+    level: 5
+    paths:
+        - src
+    symfony:
+        containerXmlPath: %currentWorkingDirectory%/var/cache/dev/App_KernelDevDebugContainer.xml
+    doctrine:
+        objectManagerLoader: %currentWorkingDirectory%/phpstan-doctrine-bootstrap.php
+    ignoreErrors:
+        -
+            identifier: missingType.generics
+            reportUnmatched: false

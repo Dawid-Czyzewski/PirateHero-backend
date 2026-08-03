@@ -1,0 +1,348 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Service\Dungeon;
+
+use App\Dungeon\DungeonCatalog;
+use App\Dungeon\DungeonCompletionReward;
+use App\Dungeon\DungeonCompletionRewardCalculator;
+use App\Dungeon\DungeonStageReward;
+use App\Dungeon\DungeonStageRewardCalculator;
+use App\Entity\User;
+use App\Entity\UserDungeonProgress;
+use App\Entity\WearableItem;
+use App\Enum\DungeonId;
+use App\Exception\BusinessRuleException;
+use App\Mapper\Api\DungeonMapper;
+use App\Repository\UserDungeonProgressRepository;
+use App\Service\Bestiary\BestiaryService;
+use App\Service\Progression\QuestProgressService;
+use App\Service\Progression\TimedActivityGuard;
+use App\Service\Progression\TitleService;
+use App\Service\ShopBoosters\ShopBoosterSessionService;
+use App\Service\User\LevelService;
+use Doctrine\DBAL\LockMode;
+use Doctrine\ORM\EntityManagerInterface;
+
+class DungeonService
+{
+    public function __construct(
+        private readonly EntityManagerInterface $entityManager,
+        private readonly UserDungeonProgressRepository $progressRepository,
+        private readonly ShopBoosterSessionService $shopBoosterSessionService,
+        private readonly DungeonBattleSimulator $battleSimulator,
+        private readonly DungeonStageRewardCalculator $stageRewardCalculator,
+        private readonly DungeonCompletionRewardCalculator $completionRewardCalculator,
+        private readonly DungeonItemRewardFactory $itemRewardFactory,
+        private readonly LevelService $levelService,
+        private readonly TimedActivityGuard $timedActivityGuard,
+        private readonly BestiaryService $bestiaryService,
+        private readonly TitleService $titleService,
+        private readonly QuestProgressService $questProgressService,
+    ) {
+    }
+
+    /**
+     * @return array{
+     *     progress: array<string, int>,
+     *     playerStats: array{
+     *         level: int,
+     *         strength: int,
+     *         agility: int,
+     *         endurance: int,
+     *         intelligence: int,
+     *         luck: int
+     *     }
+     * }
+     */
+    public function getProgress(User $user): array
+    {
+        $this->timedActivityGuard->assertNoTimedActivity($user);
+
+        return DungeonMapper::progressResponse(
+            $this->progressRepository->getProgressMapForUser($user),
+            $this->buildPlayerCombatStats($user),
+        )->toArray();
+    }
+
+    /**
+     * @return array{
+     *     won: bool,
+     *     logs: list<array{attackerIsPlayer: bool, damage: int, critical: bool}>,
+     *     playerMaxHp: int,
+     *     opponentMaxHp: int,
+     *     fameEarned: int,
+     *     famePointsChange: int,
+     *     progress: array<string, int>,
+     *     opponent: array{
+     *         id: string,
+     *         name: string,
+     *         enemyNameKey: string,
+     *         avatarId: string,
+     *         level: int,
+     *         famePoints: int,
+     *         strength: int,
+     *         agility: int,
+     *         endurance: int,
+     *         intelligence: int,
+     *         luck: int
+     *     },
+     *     rewards: array{gold: int, exp: int},
+     *     completionReward: array{gold: int, diamonds: int, item: array<string, mixed>|null}|null,
+     *     dungeonCompleted: bool,
+     *     rewardItem: array<string, mixed>|null,
+     *     updatedUser: array{
+     *         gold: int,
+     *         diamonds: int,
+     *         experiencePoints: int,
+     *         freeSkillPointsAvailable: int,
+     *         level: array{name: string, expToNextLevel: int},
+     *         storage?: array{id: int|string, slots: list<array<string, mixed>>}
+     *     }|null
+     * }
+     */
+    public function fightStage(User $user, string $dungeonIdRaw, int $stage): array
+    {
+        $this->timedActivityGuard->assertNoTimedActivity($user);
+
+        $dungeonId = DungeonId::tryFromString($dungeonIdRaw);
+        if ($dungeonId === null) {
+            throw new BusinessRuleException('dungeonNotFound');
+        }
+
+        $dungeon = DungeonCatalog::get($dungeonId);
+        if ($dungeon === null) {
+            throw new BusinessRuleException('dungeonNotFound');
+        }
+
+        if ($stage < 1 || $stage > DungeonCatalog::STAGES_PER_DUNGEON) {
+            throw new BusinessRuleException('dungeonStageInvalid');
+        }
+
+        if ($this->resolvePlayerLevel($user) < $dungeon['reqLevel']) {
+            throw new BusinessRuleException('dungeonLocked');
+        }
+
+        $progress = $this->progressRepository->findOneForUserDungeon($user, $dungeonId->value);
+        $cleared = $progress?->getClearedStage() ?? 0;
+        if ($stage !== $cleared + 1) {
+            throw new BusinessRuleException('dungeonStageLocked');
+        }
+
+        $playerStats = $this->buildPlayerCombatStats($user);
+        $opponent = DungeonCatalog::buildOpponent($dungeonId, $stage, $dungeon['enemyNameKey']);
+
+        $rng = new Mulberry32Randomizer(DungeonCatalog::seed($dungeonId, $stage));
+        $battle = $this->battleSimulator->simulate($playerStats, $opponent, $rng);
+
+        $rewards = new DungeonStageReward(0, 0);
+        $completionReward = null;
+        $rewardItem = null;
+        $dungeonCompleted = false;
+        $updatedUser = null;
+
+        if ($battle['won']) {
+            $winPayload = $this->applyStageWin($user, $dungeonId, $stage, $progress);
+            $rewards = $winPayload['rewards'];
+            $completionReward = $winPayload['completionReward'];
+            $rewardItem = $winPayload['rewardItem'];
+            $dungeonCompleted = $winPayload['dungeonCompleted'];
+            $updatedUser = $winPayload['updatedUser'];
+        }
+
+        $battle['progress'] = $this->progressRepository->getProgressMapForUser($user);
+        $battle['opponent'] = $opponent;
+        $battle['rewards'] = $rewards->toArray();
+        $battle['completionReward'] = $completionReward;
+        $battle['dungeonCompleted'] = $dungeonCompleted;
+        $battle['rewardItem'] = $rewardItem;
+        $battle['updatedUser'] = $updatedUser;
+
+        return DungeonMapper::fightStageResponse($battle)->toArray();
+    }
+
+    /**
+     * @return array{
+     *     rewards: DungeonStageReward,
+     *     completionReward: array<string, mixed>|null,
+     *     rewardItem: array<string, mixed>|null,
+     *     dungeonCompleted: bool,
+     *     updatedUser: array<string, mixed>|null
+     * }
+     */
+    private function applyStageWin(
+        User $user,
+        DungeonId $dungeonId,
+        int $stage,
+        ?UserDungeonProgress $progress,
+    ): array {
+        $connection = $this->entityManager->getConnection();
+        $connection->beginTransaction();
+
+        try {
+            $lockedUser = $this->entityManager->find(User::class, $user->getId(), LockMode::PESSIMISTIC_WRITE);
+            if (!$lockedUser instanceof User) {
+                throw new BusinessRuleException('dungeonInvalidPayload');
+            }
+
+            $progress = $this->progressRepository->findOneForUserDungeon($lockedUser, $dungeonId->value);
+            $cleared = $progress?->getClearedStage() ?? 0;
+            if ($stage !== $cleared + 1) {
+                throw new BusinessRuleException('dungeonStageLocked');
+            }
+
+            if ($progress === null) {
+                $progress = new UserDungeonProgress();
+                $progress->setUser($lockedUser);
+                $progress->setDungeonId($dungeonId->value);
+                $this->entityManager->persist($progress);
+            }
+            $progress->setClearedStage($stage);
+
+            $rewards = $this->stageRewardCalculator->forStage($dungeonId, $stage);
+            $userMutated = false;
+            if (!$rewards->isEmpty()) {
+                $lockedUser->addGold($rewards->gold);
+                $lockedUser->addExperiencePoints($rewards->exp);
+                $userMutated = true;
+            }
+
+            $completionReward = null;
+            $rewardItem = null;
+            $dungeonCompleted = false;
+            $grantedCompletionItem = null;
+
+            $isFinalStage = $stage === DungeonCatalog::STAGES_PER_DUNGEON;
+            if ($isFinalStage && !$progress->isCompletionRewardClaimed()) {
+                $completion = $this->completionRewardCalculator->forDungeon($dungeonId);
+                if (!$completion->isEmpty()) {
+                    $grantedCompletionItem = $this->applyCompletionReward($lockedUser, $completion);
+                    $progress->setCompletionRewardClaimed(true);
+                    $dungeonCompleted = true;
+                    $userMutated = true;
+                    $completionReward = [
+                        'gold' => $completion->gold,
+                        'diamonds' => $completion->diamonds,
+                        'item' => null,
+                    ];
+                }
+            }
+
+            $this->bestiaryService->recordDefeat($lockedUser, $dungeonId->value, $stage);
+
+            if ($userMutated) {
+                $this->levelService->checkAndUpdateLevel($lockedUser);
+                $this->entityManager->persist($lockedUser);
+            }
+
+            $this->entityManager->flush();
+            $connection->commit();
+
+            if ($dungeonCompleted) {
+                $this->titleService->syncUnlocks($lockedUser);
+                $this->questProgressService->checkDungeonCompletedProgress($lockedUser);
+            }
+
+            $this->questProgressService->checkBestiaryProgress($lockedUser);
+
+            if ($grantedCompletionItem instanceof WearableItem) {
+                $itemPayload = $this->itemRewardFactory->itemToClientPayload($grantedCompletionItem);
+                if ($completionReward !== null) {
+                    $completionReward['item'] = $itemPayload;
+                }
+                $rewardItem = $itemPayload;
+            }
+
+            return [
+                'rewards' => $rewards,
+                'completionReward' => $completionReward,
+                'rewardItem' => $rewardItem,
+                'dungeonCompleted' => $dungeonCompleted,
+                'updatedUser' => $userMutated ? $this->buildUpdatedUserSnapshot($lockedUser) : null,
+            ];
+        } catch (\Throwable $e) {
+            $connection->rollBack();
+            throw $e;
+        }
+    }
+
+    private function applyCompletionReward(User $user, DungeonCompletionReward $completion): ?WearableItem
+    {
+        if ($completion->gold > 0) {
+            $user->addGold($completion->gold);
+        }
+        if ($completion->diamonds > 0) {
+            $user->addDiamonds($completion->diamonds);
+        }
+
+        if (!$completion->grantsItem) {
+            return null;
+        }
+
+        return $this->itemRewardFactory->grantRandomItem($user, $completion->itemRarity);
+    }
+
+    /**
+     * @return array{
+     *     gold: int,
+     *     diamonds: int,
+     *     experiencePoints: int,
+     *     freeSkillPointsAvailable: int,
+     *     level: array{name: string, expToNextLevel: int},
+     *     storage?: array{id: int|string, slots: list<array<string, mixed>>}
+     * }
+     */
+    private function buildUpdatedUserSnapshot(User $user): array
+    {
+        $level = $user->getLevel();
+        $snapshot = [
+            'gold' => (int) $user->getGold(),
+            'diamonds' => (int) ($user->getDiamonds() ?? 0),
+            'experiencePoints' => (int) $user->getExperiencePoints(),
+            'freeSkillPointsAvailable' => (int) ($user->getFreeSkillPointsAvailable() ?? 0),
+            'level' => [
+                'name' => (string) ($level?->getName() ?? '1'),
+                'expToNextLevel' => (int) ($level?->getExpToNextLevel() ?? 100),
+            ],
+        ];
+
+        $storage = $this->itemRewardFactory->storageToClientPayload($user);
+        if ($storage !== null) {
+            $snapshot['storage'] = $storage;
+        }
+
+        return $snapshot;
+    }
+
+    /**
+     * @return array{
+     *     level: int,
+     *     strength: int,
+     *     agility: int,
+     *     endurance: int,
+     *     intelligence: int,
+     *     luck: int
+     * }
+     */
+    private function buildPlayerCombatStats(User $user): array
+    {
+        $combat = $this->shopBoosterSessionService->getCombatStatistics($user);
+
+        return [
+            'level' => $this->resolvePlayerLevel($user),
+            'strength' => (int) $combat['strength'],
+            'agility' => (int) $combat['agility'],
+            'endurance' => max(1, (int) $combat['health']),
+            'intelligence' => (int) $combat['intelligence'],
+            'luck' => (int) $combat['luck'],
+        ];
+    }
+
+    private function resolvePlayerLevel(User $user): int
+    {
+        $level = (int) ($user->getLevel()?->getName() ?? '1');
+
+        return $level > 0 ? $level : 1;
+    }
+}
