@@ -15,7 +15,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'app:seed:game-core',
-    description: 'Seed levels 1–100 and wearable item templates (safe upsert, no DB wipe)',
+    description: 'Seed levels, player titles, and wearable item templates (safe upsert, no DB wipe)',
 )]
 final class SeedGameCoreCommand extends Command
 {
@@ -49,6 +49,18 @@ final class SeedGameCoreCommand extends Command
         $levelsStatus = $levelsCmd->run(new ArrayInput([]), $output);
         if ($levelsStatus !== Command::SUCCESS) {
             return $levelsStatus;
+        }
+
+        $titlesCmd = $this->getApplication()?->find('app:seed:player-titles');
+        if ($titlesCmd === null) {
+            $io->error('Command app:seed:player-titles not found.');
+
+            return Command::FAILURE;
+        }
+
+        $titlesStatus = $titlesCmd->run(new ArrayInput([]), $output);
+        if ($titlesStatus !== Command::SUCCESS) {
+            return $titlesStatus;
         }
 
         $purge = (bool) $input->getOption('purge-templates');

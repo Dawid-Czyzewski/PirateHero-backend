@@ -56,6 +56,26 @@ final class TitleControllerTest extends ApiWebTestCase
         self::assertSame('rookie', $decoded['data']['equippedTitleCode']);
     }
 
+    public function testUnequipTitleClearsEquippedTitle(): void
+    {
+        $this->ensurePlayerTitlesSeeded();
+        $user = $this->makePersistedActivatedUser();
+        $titleService = static::getContainer()->get(TitleService::class);
+        $titleService->syncUnlocks($user);
+        $titleService->equipTitle($user, 'rookie');
+
+        $client = $this->createAuthenticatedClient($user);
+        $client->request('POST', '/api/user_titles/unequip');
+
+        $decoded = $this->assertJsonEnvelopeSuccess($client->getResponse());
+        self::assertFalse($decoded['data']['equipped']);
+        self::assertNull($decoded['data']['equippedTitleCode']);
+
+        $client->request('GET', '/api/user_titles');
+        $list = $this->assertJsonEnvelopeSuccess($client->getResponse());
+        self::assertNull($list['data']['equippedTitleCode']);
+    }
+
     public function testEquipLockedTitleReturnsProblemJson(): void
     {
         $this->ensurePlayerTitlesSeeded();

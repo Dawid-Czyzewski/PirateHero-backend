@@ -46,4 +46,12 @@ class TitleController extends AbstractController
 
         return ApiEnvelope::jsonResponse($responseData, 'titleEquipped');
     }
+
+    #[Route('/unequip', name: 'api_user_titles_unequip', methods: ['POST'])]
+    public function unequipTitle(#[CurrentUser] User $user): JsonResponse
+    {
+        $responseData = $this->titleService->unequipTitle($user);
+
+        return ApiEnvelope::jsonResponse($responseData, 'titleUnequipped');
+    }
 }

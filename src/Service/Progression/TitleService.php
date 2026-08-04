@@ -119,6 +119,21 @@ readonly class TitleService
         ];
     }
 
+    /**
+     * @return array{equipped: bool, equippedTitleCode: null}
+     */
+    public function unequipTitle(User $user): array
+    {
+        $user->setEquippedTitle(null);
+        $this->entityManager->persist($user);
+        $this->entityManager->flush();
+
+        return [
+            'equipped' => false,
+            'equippedTitleCode' => null,
+        ];
+    }
+
     public function equipRookieIfNoneEquipped(User $user): void
     {
         if ($user->getEquippedTitle() !== null) {
