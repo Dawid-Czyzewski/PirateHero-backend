@@ -3013,6 +3013,43 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
+  /missions/{id}/skip:
+    post:
+      operationId: skipMission
+      tags: [Activities]
+      summary: Skip remaining mission time with diamonds (ready to claim)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: OK — timer finished; claim via complete
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    $ref: "#/components/schemas/ApiEnvelope"
+                  -
+                    type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/MissionSkippedResult"
+        400:
+          description: Business rule (not enough diamonds / not active)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        403:
+          description: Ownership / rule violation
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
   /missions/{id}/start:
     post:
       operationId: startMission
@@ -4169,8 +4206,22 @@ components:
           type: integer
         bonusPercent:
           type: integer
+        diamondsSpent:
+          type: integer
         newLevel:
           type: ["object", "null"]
+    MissionSkippedResult:
+      type: object
+      properties:
+        diamondsSpent:
+          type: integer
+        diamonds:
+          type: integer
+        startTime:
+          type: string
+          format: date-time
+        readyToClaim:
+          type: boolean
     WorkStartedResult:
       type: object
       properties:
@@ -4218,6 +4269,12 @@ components:
             type: integer
         playerStats:
           type: object
+        cooldownUntil:
+          type: ["string", "null"]
+          format: date-time
+        cooldownSecondsRemaining:
+          type: integer
+          minimum: 0
     DungeonFightStage:
       type: object
       properties:
@@ -4256,6 +4313,12 @@ components:
           type: ["object", "null"]
         updatedUser:
           type: ["object", "null"]
+        cooldownUntil:
+          type: ["string", "null"]
+          format: date-time
+        cooldownSecondsRemaining:
+          type: integer
+          minimum: 0
     CoinFlipPlayResult:
       type: object
       properties:

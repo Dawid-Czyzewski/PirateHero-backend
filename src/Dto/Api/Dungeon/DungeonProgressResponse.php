@@ -12,6 +12,8 @@ final readonly class DungeonProgressResponse
     public function __construct(
         public array $progress,
         public DungeonPlayerStatsDto $playerStats,
+        public ?string $cooldownUntil = null,
+        public int $cooldownSecondsRemaining = 0,
     ) {
     }
 
@@ -25,7 +27,9 @@ final readonly class DungeonProgressResponse
      *         endurance: int,
      *         intelligence: int,
      *         luck: int
-     *     }
+     *     },
+     *     cooldownUntil: string|null,
+     *     cooldownSecondsRemaining: int
      * }
      */
     public function toArray(): array
@@ -33,6 +37,8 @@ final readonly class DungeonProgressResponse
         return [
             'progress' => $this->progress,
             'playerStats' => $this->playerStats->toArray(),
+            'cooldownUntil' => $this->cooldownUntil,
+            'cooldownSecondsRemaining' => $this->cooldownSecondsRemaining,
         ];
     }
 }

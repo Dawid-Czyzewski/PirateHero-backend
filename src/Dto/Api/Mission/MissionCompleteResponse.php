@@ -16,6 +16,7 @@ final readonly class MissionCompleteResponse
         public int $earnedExp,
         public int $bonusPercent,
         public ?array $newLevel = null,
+        public int $diamondsSpent = 0,
     ) {
     }
 
@@ -26,6 +27,7 @@ final readonly class MissionCompleteResponse
             'earnedGold' => $this->earnedGold,
             'earnedExp' => $this->earnedExp,
             'bonusPercent' => $this->bonusPercent,
+            'diamondsSpent' => $this->diamondsSpent,
         ];
 
         if ($this->newLevel !== null) {

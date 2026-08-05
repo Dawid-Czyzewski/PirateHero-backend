@@ -19,6 +19,29 @@ final class DungeonTest extends ApiWebTestCase
         $body = json_decode($client->getResponse()->getContent() ?: '', true, 512, \JSON_THROW_ON_ERROR);
         self::assertArrayHasKey('progress', $body['data']);
         self::assertArrayHasKey('playerStats', $body['data']);
+        self::assertArrayHasKey('cooldownSecondsRemaining', $body['data']);
+        self::assertSame(0, $body['data']['cooldownSecondsRemaining']);
+    }
+
+    public function testFightBlockedDuringGlobalCooldownAfterLoss(): void
+    {
+        $user = $this->makePersistedActivatedUser();
+        $this->setUserLevel($user, '80');
+        $user->setDungeonLostAt(new \DateTimeImmutable('-5 minutes'));
+        $this->entityManager()->flush();
+
+        $client = $this->createAuthenticatedClient($user);
+        $client->request(
+            'POST',
+            '/api/users/dungeons/fight',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode(['dungeonId' => 'krypta', 'stage' => 1], \JSON_THROW_ON_ERROR),
+        );
+        self::assertSame(400, $client->getResponse()->getStatusCode());
+        $problem = $this->assertProblemJson($client->getResponse());
+        self::assertSame('dungeonCooldownActive', $problem['detail']);
     }
 
     public function testFightStageReturnsBattleAndSavesProgressOnWin(): void
@@ -84,6 +107,9 @@ final class DungeonTest extends ApiWebTestCase
             self::assertSame(['gold' => 0, 'exp' => 0], $body['data']['rewards']);
             self::assertNull($body['data']['updatedUser']);
             self::assertSame(500, $user->getGold());
+            self::assertGreaterThan(0, $body['data']['cooldownSecondsRemaining']);
+            $em->refresh($user);
+            self::assertNotNull($user->getDungeonLostAt());
         } else {
             self::markTestSkipped('Fight was won; cannot assert loss rewards on this run.');
         }

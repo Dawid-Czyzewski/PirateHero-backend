@@ -26,4 +26,6 @@ final class DungeonConstants
     public const MAX_ROUNDS = 20;
 
     public const HP_POOL_MULTIPLIER = 3;
+
+    public const LOSS_COOLDOWN_SECONDS = 3600;
 }

@@ -17,11 +17,17 @@ final readonly class DungeonMapper
      * @param array<string, int> $progress
      * @param array{level: int, strength: int, agility: int, endurance: int, intelligence: int, luck: int} $playerStats
      */
-    public static function progressResponse(array $progress, array $playerStats): DungeonProgressResponse
-    {
+    public static function progressResponse(
+        array $progress,
+        array $playerStats,
+        ?string $cooldownUntil = null,
+        int $cooldownSecondsRemaining = 0,
+    ): DungeonProgressResponse {
         return new DungeonProgressResponse(
             progress: $progress,
             playerStats: self::playerStats($playerStats),
+            cooldownUntil: $cooldownUntil,
+            cooldownSecondsRemaining: $cooldownSecondsRemaining,
         );
     }
 
@@ -73,7 +79,9 @@ final readonly class DungeonMapper
      *         freeSkillPointsAvailable: int,
      *         level: array{name: string, expToNextLevel: int},
      *         storage?: array{id: int|string, slots: list<array<string, mixed>>}
-     *     }|null
+     *     }|null,
+     *     cooldownUntil?: string|null,
+     *     cooldownSecondsRemaining?: int
      * } $battle
      */
     public static function fightStageResponse(array $battle): DungeonFightStageResponse
@@ -119,6 +127,8 @@ final readonly class DungeonMapper
             dungeonCompleted: (bool) $battle['dungeonCompleted'],
             rewardItem: $battle['rewardItem'],
             updatedUser: $battle['updatedUser'],
+            cooldownUntil: $battle['cooldownUntil'] ?? null,
+            cooldownSecondsRemaining: (int) ($battle['cooldownSecondsRemaining'] ?? 0),
         );
     }
 }

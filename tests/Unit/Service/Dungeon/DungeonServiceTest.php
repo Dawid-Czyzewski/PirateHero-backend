@@ -86,7 +86,8 @@ final class DungeonServiceTest extends TestCase
         $progressRepo->method('getProgressMapForUser')->willReturn([]);
 
         $em = $this->createMock(EntityManagerInterface::class);
-        $em->expects(self::never())->method('flush');
+        $this->mockTransactionalEntityManager($em, $user);
+        $em->expects(self::once())->method('flush');
 
         $boosterSession = $this->createMock(ShopBoosterSessionService::class);
         $boosterSession->method('getCombatStatistics')->willReturn([
@@ -119,6 +120,71 @@ final class DungeonServiceTest extends TestCase
         self::assertNull($result['updatedUser']);
         self::assertSame(100, $user->getGold());
         self::assertSame(50, $user->getExperiencePoints());
+        self::assertNotNull($user->getDungeonLostAt());
+        self::assertGreaterThan(0, $result['cooldownSecondsRemaining']);
+    }
+
+    public function testFightStageBlockedDuringCooldown(): void
+    {
+        $user = $this->makeDungeonUser(gold: 100, exp: 50);
+        $user->setDungeonLostAt(new \DateTimeImmutable('-10 minutes'));
+
+        $service = $this->makeDungeonService(
+            $this->createMock(EntityManagerInterface::class),
+            $this->createMock(UserDungeonProgressRepository::class),
+            $this->createMock(ShopBoosterSessionService::class),
+            $this->createMock(DungeonBattleSimulator::class),
+            $this->createMock(LevelService::class),
+        );
+
+        $this->expectException(BusinessRuleException::class);
+        $this->expectExceptionMessage('dungeonCooldownActive');
+
+        $service->fightStage($user, DungeonId::Krypta->value, 1);
+    }
+
+    public function testFightStageClearsCooldownOnWin(): void
+    {
+        $user = $this->makeDungeonUser(gold: 100, exp: 50);
+        $user->setDungeonLostAt(new \DateTimeImmutable('-2 hours'));
+
+        $progressRepo = $this->createMock(UserDungeonProgressRepository::class);
+        $progressRepo->method('findOneForUserDungeon')->willReturn(null);
+        $progressRepo->method('getProgressMapForUser')->willReturn(['krypta' => 1]);
+
+        $em = $this->createMock(EntityManagerInterface::class);
+        $this->mockTransactionalEntityManager($em, $user);
+        $em->expects(self::atLeastOnce())->method('persist');
+        $em->expects(self::once())->method('flush');
+
+        $boosterSession = $this->createMock(ShopBoosterSessionService::class);
+        $boosterSession->method('getCombatStatistics')->willReturn([
+            'strength' => 200,
+            'agility' => 200,
+            'health' => 200,
+            'intelligence' => 50,
+            'luck' => 50,
+        ]);
+
+        $simulator = $this->createMock(DungeonBattleSimulator::class);
+        $simulator->method('simulate')->willReturn([
+            'won' => true,
+            'logs' => [],
+            'playerMaxHp' => 600,
+            'opponentMaxHp' => 100,
+            'fameEarned' => 0,
+            'famePointsChange' => 0,
+        ]);
+
+        $levelService = $this->createMock(LevelService::class);
+        $levelService->expects(self::once())->method('checkAndUpdateLevel')->with($user);
+
+        $service = $this->makeDungeonService($em, $progressRepo, $boosterSession, $simulator, $levelService);
+        $result = $service->fightStage($user, DungeonId::Krypta->value, 1);
+
+        self::assertTrue($result['won']);
+        self::assertNull($user->getDungeonLostAt());
+        self::assertSame(0, $result['cooldownSecondsRemaining']);
     }
 
     public function testFightStageBlockedDuringMission(): void

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Dto\Api\Mission\MissionCancelledResponse;
+use App\Dto\Api\Mission\MissionSkippedResponse;
 use App\Dto\Api\Mission\MissionStartedResponse;
 use App\Entity\User;
 use App\Http\ApiEnvelope;
@@ -55,6 +56,22 @@ final class MissionController extends AbstractController
         return ApiEnvelope::jsonResponse(
             $responseData,
             $result['levelData'] !== null ? 'missionCompletedAndLevelUp' : 'missionCompleted'
+        );
+    }
+
+    public function skipMission(#[CurrentUser] User $user, int $id): JsonResponse
+    {
+        $this->missionService->resolveOwnedMission($user, $id);
+        $result = $this->missionService->skipMission($user, $id);
+
+        return ApiEnvelope::jsonResponse(
+            (new MissionSkippedResponse(
+                diamondsSpent: $result['diamondsSpent'],
+                diamonds: $result['diamonds'],
+                startTime: $result['startTime'],
+                readyToClaim: $result['readyToClaim'],
+            ))->toArray(),
+            'missionSkippedReadyToClaim',
         );
     }
 }

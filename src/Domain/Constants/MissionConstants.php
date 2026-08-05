@@ -24,6 +24,8 @@ final class MissionConstants
 
     public const SECONDS_PER_MINUTE = 60;
 
+    public const SKIP_DIAMOND_COST_MAX = 5;
+
     public const ENERGY_FALLBACK_LOW_DIVISOR = 600;
 
     public const ENERGY_FALLBACK_HIGH_DIVISOR = 360;
@@ -40,4 +42,26 @@ final class MissionConstants
         2100 => [5, 7],
         3600 => [8, 10],
     ];
+
+    public static function remainingSeconds(
+        \DateTimeInterface $startTime,
+        int $durationSeconds,
+        ?\DateTimeInterface $now = null,
+    ): int {
+        $nowTs = ($now ?? new \DateTimeImmutable())->getTimestamp();
+        $elapsed = $nowTs - $startTime->getTimestamp();
+
+        return max(0, $durationSeconds - $elapsed);
+    }
+
+    public static function diamondCostToSkip(int $remainingSeconds): int
+    {
+        if ($remainingSeconds <= 0) {
+            return 0;
+        }
+
+        $remainingMinutes = (int) ceil($remainingSeconds / self::SECONDS_PER_MINUTE);
+
+        return min(self::SKIP_DIAMOND_COST_MAX, max(1, $remainingMinutes));
+    }
 }

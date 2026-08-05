@@ -32,6 +32,12 @@ use Symfony\Component\Serializer\Annotation\Groups;
             security: "is_granted('IS_AUTHENTICATED_FULLY')",
             name: 'complete_mission'
         ),
+        new Post(
+            uriTemplate: '/missions/{id}/skip',
+            controller: MissionController::class.'::skipMission',
+            security: "is_granted('IS_AUTHENTICATED_FULLY')",
+            name: 'skip_mission'
+        ),
     ],
 )]
 class Mission

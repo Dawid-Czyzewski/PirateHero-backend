@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\Dungeon;
 
+use App\Domain\Constants\DungeonConstants;
 use App\Dungeon\DungeonCatalog;
 use App\Dungeon\DungeonCompletionReward;
 use App\Dungeon\DungeonCompletionRewardCalculator;
@@ -53,16 +54,21 @@ class DungeonService
      *         endurance: int,
      *         intelligence: int,
      *         luck: int
-     *     }
+     *     },
+     *     cooldownUntil: string|null,
+     *     cooldownSecondsRemaining: int
      * }
      */
     public function getProgress(User $user): array
     {
         $this->timedActivityGuard->assertNoTimedActivity($user);
+        $cooldown = $this->resolveCooldown($user);
 
         return DungeonMapper::progressResponse(
             $this->progressRepository->getProgressMapForUser($user),
             $this->buildPlayerCombatStats($user),
+            $cooldown['cooldownUntil'],
+            $cooldown['cooldownSecondsRemaining'],
         )->toArray();
     }
 
@@ -105,6 +111,7 @@ class DungeonService
     public function fightStage(User $user, string $dungeonIdRaw, int $stage): array
     {
         $this->timedActivityGuard->assertNoTimedActivity($user);
+        $this->assertDungeonCooldownClear($user);
 
         $dungeonId = DungeonId::tryFromString($dungeonIdRaw);
         if ($dungeonId === null) {
@@ -149,8 +156,11 @@ class DungeonService
             $rewardItem = $winPayload['rewardItem'];
             $dungeonCompleted = $winPayload['dungeonCompleted'];
             $updatedUser = $winPayload['updatedUser'];
+        } else {
+            $this->applyStageLoss($user);
         }
 
+        $cooldown = $this->resolveCooldown($user);
         $battle['progress'] = $this->progressRepository->getProgressMapForUser($user);
         $battle['opponent'] = $opponent;
         $battle['rewards'] = $rewards->toArray();
@@ -158,6 +168,8 @@ class DungeonService
         $battle['dungeonCompleted'] = $dungeonCompleted;
         $battle['rewardItem'] = $rewardItem;
         $battle['updatedUser'] = $updatedUser;
+        $battle['cooldownUntil'] = $cooldown['cooldownUntil'];
+        $battle['cooldownSecondsRemaining'] = $cooldown['cooldownSecondsRemaining'];
 
         return DungeonMapper::fightStageResponse($battle)->toArray();
     }
@@ -199,13 +211,13 @@ class DungeonService
                 $this->entityManager->persist($progress);
             }
             $progress->setClearedStage($stage);
+            $lockedUser->setDungeonLostAt(null);
 
             $rewards = $this->stageRewardCalculator->forStage($dungeonId, $stage);
-            $userMutated = false;
+            $userMutated = true;
             if (!$rewards->isEmpty()) {
                 $lockedUser->addGold($rewards->gold);
                 $lockedUser->addExperiencePoints($rewards->exp);
-                $userMutated = true;
             }
 
             $completionReward = null;
@@ -239,6 +251,8 @@ class DungeonService
             $this->entityManager->flush();
             $connection->commit();
 
+            $user->setDungeonLostAt(null);
+
             if ($dungeonCompleted) {
                 $this->titleService->syncUnlocks($lockedUser);
                 $this->questProgressService->checkDungeonCompletedProgress($lockedUser);
@@ -265,6 +279,68 @@ class DungeonService
             $connection->rollBack();
             throw $e;
         }
+    }
+
+    private function applyStageLoss(User $user): void
+    {
+        $connection = $this->entityManager->getConnection();
+        $connection->beginTransaction();
+
+        try {
+            $lockedUser = $this->entityManager->find(User::class, $user->getId(), LockMode::PESSIMISTIC_WRITE);
+            if (!$lockedUser instanceof User) {
+                throw new BusinessRuleException('dungeonInvalidPayload');
+            }
+
+            $lostAt = new \DateTimeImmutable();
+            $lockedUser->setDungeonLostAt($lostAt);
+            $this->entityManager->persist($lockedUser);
+            $this->entityManager->flush();
+            $connection->commit();
+
+            $user->setDungeonLostAt($lostAt);
+        } catch (\Throwable $e) {
+            $connection->rollBack();
+            throw $e;
+        }
+    }
+
+    private function assertDungeonCooldownClear(User $user): void
+    {
+        $cooldown = $this->resolveCooldown($user);
+        if ($cooldown['cooldownSecondsRemaining'] > 0) {
+            throw new BusinessRuleException('dungeonCooldownActive');
+        }
+    }
+
+    /**
+     * @return array{cooldownUntil: string|null, cooldownSecondsRemaining: int}
+     */
+    private function resolveCooldown(User $user, ?\DateTimeImmutable $now = null): array
+    {
+        $lostAt = $user->getDungeonLostAt();
+        if ($lostAt === null) {
+            return [
+                'cooldownUntil' => null,
+                'cooldownSecondsRemaining' => 0,
+            ];
+        }
+
+        $now ??= new \DateTimeImmutable();
+        $until = \DateTimeImmutable::createFromInterface($lostAt)
+            ->modify('+'.DungeonConstants::LOSS_COOLDOWN_SECONDS.' seconds');
+        $remaining = $until->getTimestamp() - $now->getTimestamp();
+        if ($remaining <= 0) {
+            return [
+                'cooldownUntil' => null,
+                'cooldownSecondsRemaining' => 0,
+            ];
+        }
+
+        return [
+            'cooldownUntil' => $until->format(\DateTimeInterface::ATOM),
+            'cooldownSecondsRemaining' => $remaining,
+        ];
     }
 
     private function applyCompletionReward(User $user, DungeonCompletionReward $completion): ?WearableItem

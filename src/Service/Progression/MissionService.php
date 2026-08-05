@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Service\Progression;
 
+use App\Domain\Constants\MissionConstants;
 use App\Dto\Api\Mission\MissionDto;
 use App\Entity\Mission;
 use App\Entity\Ship;
 use App\Entity\User;
+use App\Entity\UserActualActivity;
+use App\Exception\BusinessRuleException;
 use App\Exception\OperationForbiddenException;
 use App\Exception\ResourceNotFoundException;
 use App\Mapper\Api\MissionMapper;
@@ -102,33 +105,82 @@ readonly class MissionService
                 'missionNotComplete',
             );
 
-            $ship = $this->shipMembershipService->getShipForUser($lockedUser);
-            $rewards = $this->missionRewardCalculator->calculate($lockedUser, $mission, $ship);
-            $lockedUser->addGold($rewards['gold']);
-            $lockedUser->addExperiencePoints($rewards['exp']);
+            return $this->finishActiveMission($lockedUser, $currentActivity, $mission, diamondsSpent: 0);
+        });
+    }
 
-            $levelUpData = $this->levelService->checkAndUpdateLevel($lockedUser);
-            $isLevelUp = $levelUpData['levelUp'];
+    public function skipMission(User $user, int $missionId): array
+    {
+        return $this->userWriteLockExecutor->execute($user, function (User $lockedUser) use ($missionId): array {
+            [$currentActivity, $mission] = $this->timedActivityLifecycle->requireActiveMission($lockedUser);
 
-            $this->timedActivityLifecycle->clear($lockedUser, $currentActivity);
+            if ((int) $mission->getId() !== $missionId) {
+                throw new BusinessRuleException('missionNotActive');
+            }
+
+            $durationSeconds = (int) $mission->getDurationInSeconds();
+            $remainingSeconds = MissionConstants::remainingSeconds(
+                $currentActivity->getStartTime(),
+                $durationSeconds,
+            );
+            if ($remainingSeconds <= 0) {
+                throw new BusinessRuleException('missionAlreadyComplete');
+            }
+
+            $cost = MissionConstants::diamondCostToSkip($remainingSeconds);
+            $lockedUser->spendDiamonds($cost);
+
+            $completedStart = (new \DateTime())->modify(sprintf('-%d seconds', $durationSeconds));
+            $currentActivity->setStartTime($completedStart);
+            $this->entityManager->persist($currentActivity);
             $this->entityManager->persist($lockedUser);
             $this->entityManager->flush();
 
-            $this->regenerateMissionsForUser($lockedUser);
-
             return [
-                'levelData' => $isLevelUp
-                    ? [
-                        'id' => $lockedUser->getLevel()->getId(),
-                        'name' => $lockedUser->getLevel()->getName(),
-                        'expToNextLevel' => $lockedUser->getLevel()->getExpToNextLevel(),
-                    ]
-                    : null,
-                'earnedGold' => $rewards['gold'],
-                'earnedExp' => $rewards['exp'],
-                'bonusPercent' => $rewards['bonusPercent'],
+                'diamondsSpent' => $cost,
+                'diamonds' => (int) ($lockedUser->getDiamonds() ?? 0),
+                'startTime' => $completedStart->format(\DateTimeInterface::ATOM),
+                'readyToClaim' => true,
             ];
         });
+    }
+
+    /**
+     * @return array{earnedGold: int, earnedExp: int, bonusPercent: int, levelData: array<string, mixed>|null, diamondsSpent: int}
+     */
+    private function finishActiveMission(
+        User $lockedUser,
+        UserActualActivity $currentActivity,
+        Mission $mission,
+        int $diamondsSpent,
+    ): array {
+        $ship = $this->shipMembershipService->getShipForUser($lockedUser);
+        $rewards = $this->missionRewardCalculator->calculate($lockedUser, $mission, $ship);
+        $lockedUser->addGold($rewards['gold']);
+        $lockedUser->addExperiencePoints($rewards['exp']);
+
+        $levelUpData = $this->levelService->checkAndUpdateLevel($lockedUser);
+        $isLevelUp = $levelUpData['levelUp'];
+
+        $this->timedActivityLifecycle->clear($lockedUser, $currentActivity);
+        $this->entityManager->persist($lockedUser);
+        $this->entityManager->flush();
+
+        $this->regenerateMissionsForUser($lockedUser);
+
+        return [
+            'levelData' => $isLevelUp
+                ? [
+                    'id' => $lockedUser->getLevel()->getId(),
+                    'name' => $lockedUser->getLevel()->getName(),
+                    'expToNextLevel' => $lockedUser->getLevel()->getExpToNextLevel(),
+                ]
+                : null,
+            'earnedGold' => $rewards['gold'],
+            'earnedExp' => $rewards['exp'],
+            'bonusPercent' => $rewards['bonusPercent'],
+            'diamondsSpent' => $diamondsSpent,
+        ];
     }
 
     public function regenerateMissionsForUser(User $user): void
@@ -183,7 +235,7 @@ readonly class MissionService
     }
 
     /**
-     * @param array{earnedGold: int, earnedExp: int, bonusPercent: int, levelData: array<string, mixed>|null} $result
+     * @param array{earnedGold: int, earnedExp: int, bonusPercent: int, levelData: array<string, mixed>|null, diamondsSpent?: int} $result
      *
      * @return array<string, mixed>
      */

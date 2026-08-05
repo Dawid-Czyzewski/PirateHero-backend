@@ -34,6 +34,8 @@ final readonly class DungeonFightStageResponse
         public bool $dungeonCompleted,
         public ?array $rewardItem,
         public ?array $updatedUser,
+        public ?string $cooldownUntil = null,
+        public int $cooldownSecondsRemaining = 0,
     ) {
     }
 
@@ -70,7 +72,9 @@ final readonly class DungeonFightStageResponse
      *         freeSkillPointsAvailable: int,
      *         level: array{name: string, expToNextLevel: int},
      *         storage?: array{id: int|string, slots: list<array<string, mixed>>}
-     *     }|null
+     *     }|null,
+     *     cooldownUntil: string|null,
+     *     cooldownSecondsRemaining: int
      * }
      */
     public function toArray(): array
@@ -89,6 +93,8 @@ final readonly class DungeonFightStageResponse
             'dungeonCompleted' => $this->dungeonCompleted,
             'rewardItem' => $this->rewardItem,
             'updatedUser' => $this->updatedUser,
+            'cooldownUntil' => $this->cooldownUntil,
+            'cooldownSecondsRemaining' => $this->cooldownSecondsRemaining,
         ];
     }
 }

@@ -68,6 +68,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $passwordResetTokenExpiresAt = null;
 
+    #[ORM\Column(name: 'dungeon_lost_at', nullable: true)]
+    private ?\DateTimeImmutable $dungeonLostAt = null;
+
     #[ORM\Column]
     #[Groups(['user:read'])]
     private ?int $energyPoints = null;
@@ -424,6 +427,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $this->passwordResetToken = null;
         $this->passwordResetTokenExpiresAt = null;
+    }
+
+    public function getDungeonLostAt(): ?\DateTimeImmutable
+    {
+        return $this->dungeonLostAt;
+    }
+
+    public function setDungeonLostAt(?\DateTimeImmutable $dungeonLostAt): static
+    {
+        $this->dungeonLostAt = $dungeonLostAt;
+
+        return $this;
     }
 
     public function getEnergyPoints(): ?int

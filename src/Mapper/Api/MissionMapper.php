@@ -45,7 +45,7 @@ final readonly class MissionMapper
 
     /**
      * @param list<MissionDto> $missions
-     * @param array{earnedGold: int, earnedExp: int, bonusPercent: int, levelData: array<string, mixed>|null} $result
+     * @param array{earnedGold: int, earnedExp: int, bonusPercent: int, levelData: array<string, mixed>|null, diamondsSpent?: int} $result
      */
     public static function completeResponse(array $missions, array $result): MissionCompleteResponse
     {
@@ -55,6 +55,7 @@ final readonly class MissionMapper
             earnedExp: $result['earnedExp'],
             bonusPercent: $result['bonusPercent'],
             newLevel: $result['levelData'],
+            diamondsSpent: (int) ($result['diamondsSpent'] ?? 0),
         );
     }
 }
