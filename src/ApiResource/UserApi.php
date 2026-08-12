@@ -134,7 +134,7 @@ use App\Entity\User;
             read: false,
         ),
         new Get(
-            uriTemplate: '/users/daily-challenges',
+            uriTemplate: '/users/daily-challenges/status',
             controller: DailyChallengeController::class.'::getStatus',
             security: "is_granted('IS_AUTHENTICATED_FULLY')",
             read: false,
