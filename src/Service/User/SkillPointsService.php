@@ -10,15 +10,19 @@ use App\Enum\QuestCategory;
 use App\Enum\UserStatType;
 use App\Exception\BusinessRuleException;
 use App\Exception\ResourceNotFoundException;
+use App\Service\Progression\DailyChallengeService;
 use App\Service\Progression\QuestProgressService;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 class SkillPointsService
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
         private QuestProgressService $questProgressService,
+        #[Autowire(lazy: true)]
+        private DailyChallengeService $dailyChallengeService,
     ) {
     }
 
@@ -98,6 +102,7 @@ class SkillPointsService
 
         if ($goldCost > 0) {
             $this->questProgressService->checkAndUpdateProgress($user, QuestCategory::GOLD_SPENT, $goldCost);
+            $this->dailyChallengeService->recordGoldSpent($user, $goldCost);
         }
     }
 

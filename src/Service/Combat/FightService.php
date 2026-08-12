@@ -15,6 +15,7 @@ use App\Enum\QuestCategory;
 use App\Exception\BusinessRuleException;
 use App\Exception\ResourceNotFoundException;
 use App\Mapper\Api\FightMapper;
+use App\Service\Progression\DailyChallengeService;
 use App\Service\Progression\QuestProgressService;
 use App\Service\Progression\QuestService;
 use App\Service\ShopBoosters\CombatStatisticsProvider;
@@ -31,6 +32,7 @@ readonly class FightService
         private readonly QuestService $questService,
         private readonly TurnBasedDuelResolver $duelResolver,
         private readonly CombatStatisticsProvider $combatStatisticsProvider,
+        private readonly DailyChallengeService $dailyChallengeService,
     ) {
     }
 
@@ -131,12 +133,13 @@ readonly class FightService
             if ($isAttackerVictory) {
                 $this->questProgressService->checkAndUpdateProgress($attacker, QuestCategory::FIGHTS_WON, 1);
                 $this->questProgressService->checkAndUpdateProgress($defender, QuestCategory::FIGHTS_LOST, 1);
+                $this->dailyChallengeService->recordArenaWins($attacker, 1);
             } else {
                 $this->questProgressService->checkAndUpdateProgress($defender, QuestCategory::FIGHTS_WON, 1);
                 $this->questProgressService->checkAndUpdateProgress($attacker, QuestCategory::FIGHTS_LOST, 1);
+                $this->dailyChallengeService->recordArenaWins($defender, 1);
             }
 
-            /** Fresh opponent list after fight (same pool as /opponents; may include the defender again). */
             $opponentsNext = $this->getAvailableOpponents($attacker);
 
             return FightMapper::startResponse([

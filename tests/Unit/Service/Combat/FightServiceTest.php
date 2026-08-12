@@ -8,6 +8,7 @@ use App\Exception\BusinessRuleException;
 use App\Repository\UserRepository;
 use App\Service\Combat\FightService;
 use App\Service\Combat\TurnBasedDuelResolver;
+use App\Service\Progression\DailyChallengeService;
 use App\Service\Progression\QuestProgressService;
 use App\Service\Progression\QuestService;
 use App\Service\ShopBoosters\CombatStatisticsProvider;
@@ -37,6 +38,7 @@ final class FightServiceTest extends TestCase
             UnconstructedInstance::of(QuestService::class),
             $this->createMock(TurnBasedDuelResolver::class),
             $this->combatStatsPassthrough(),
+            $this->createMock(DailyChallengeService::class),
         );
 
         $out = $service->getAvailableOpponents(UserStubFactory::create(['prefix' => 'hero', 'levelName' => '2']));
@@ -71,6 +73,7 @@ final class FightServiceTest extends TestCase
             UnconstructedInstance::of(QuestService::class),
             $this->createMock(TurnBasedDuelResolver::class),
             $this->combatStatsPassthrough(),
+            $this->createMock(DailyChallengeService::class),
         );
 
         $this->expectException(BusinessRuleException::class);

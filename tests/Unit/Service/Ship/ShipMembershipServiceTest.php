@@ -14,6 +14,7 @@ use App\Exception\BusinessRuleException;
 use App\Repository\ShipMemberRepository;
 use App\Repository\ShipMessageRepository;
 use App\Repository\UserRepository;
+use App\Service\Progression\DailyChallengeService;
 use App\Service\Ship\ShipChatService;
 use App\Service\Ship\ShipMembershipService;
 use Doctrine\DBAL\Connection;
@@ -49,6 +50,7 @@ final class ShipMembershipServiceTest extends TestCase
             $this->createMock(ShipMessageRepository::class),
             $userRepo,
             $this->createMock(ShipChatService::class),
+            $this->createMock(DailyChallengeService::class),
         );
 
         $this->expectException(BusinessRuleException::class);
@@ -83,6 +85,7 @@ final class ShipMembershipServiceTest extends TestCase
             $this->createMock(ShipMessageRepository::class),
             $userRepo,
             $this->createMock(ShipChatService::class),
+            $this->createMock(DailyChallengeService::class),
         );
 
         $this->expectException(BusinessRuleException::class);
@@ -101,6 +104,7 @@ final class ShipMembershipServiceTest extends TestCase
             $this->createMock(ShipMessageRepository::class),
             $this->createMock(UserRepository::class),
             $this->createMock(ShipChatService::class),
+            $this->createMock(DailyChallengeService::class),
         );
 
         $this->expectException(BusinessRuleException::class);
@@ -122,6 +126,7 @@ final class ShipMembershipServiceTest extends TestCase
             $this->createMock(ShipMessageRepository::class),
             $this->createMock(UserRepository::class),
             $this->createMock(ShipChatService::class),
+            $this->createMock(DailyChallengeService::class),
         );
 
         self::assertSame($ship, $service->getShipForUser($this->makeUser()));
@@ -138,6 +143,7 @@ final class ShipMembershipServiceTest extends TestCase
             $this->createMock(ShipMessageRepository::class),
             $this->createMock(UserRepository::class),
             $this->createMock(ShipChatService::class),
+            $this->createMock(DailyChallengeService::class),
         );
 
         self::assertFalse($service->isUserOwner($this->makeUser(), new Ship()));
@@ -159,6 +165,7 @@ final class ShipMembershipServiceTest extends TestCase
             $this->createMock(ShipMessageRepository::class),
             $this->createMock(UserRepository::class),
             $chat,
+            $this->createMock(DailyChallengeService::class),
         );
 
         $ship = (new Ship())->setTitle('old');

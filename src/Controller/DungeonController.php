@@ -37,14 +37,21 @@ final class DungeonController extends AbstractController
 
         $dungeonId = $raw['dungeonId'] ?? null;
         $stage = $raw['stage'] ?? null;
+        $difficulty = $raw['difficulty'] ?? 'normal';
+
         if (!\is_string($dungeonId)) {
             throw new BusinessRuleException('dungeonInvalidPayload');
         }
+
         if (!\is_int($stage) && !(\is_string($stage) && ctype_digit($stage))) {
             throw new BusinessRuleException('dungeonInvalidPayload');
         }
+        
+        if (!\is_string($difficulty)) {
+            throw new BusinessRuleException('dungeonInvalidPayload');
+        }
 
-        $result = $this->dungeonService->fightStage($user, $dungeonId, (int) $stage);
+        $result = $this->dungeonService->fightStage($user, $dungeonId, (int) $stage, $difficulty);
 
         return ApiEnvelope::jsonResponse($result, null, Response::HTTP_OK);
     }

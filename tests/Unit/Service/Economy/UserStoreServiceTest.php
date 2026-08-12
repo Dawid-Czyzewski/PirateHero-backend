@@ -15,6 +15,7 @@ use App\Exception\OperationForbiddenException;
 use App\Exception\ResourceNotFoundException;
 use App\Service\Economy\UserStoreService;
 use App\Service\GameShop\GameShopWearableFactory;
+use App\Service\Progression\DailyChallengeService;
 use App\Service\Progression\QuestProgressService;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\LockMode;
@@ -31,7 +32,7 @@ final class UserStoreServiceTest extends TestCase
         $storeRepo = $this->createMock(EntityRepository::class);
         $storeRepo->method('find')->willReturn(null);
         $this->mockTransactionalEm($em, $user, $storeRepo);
-        $service = new UserStoreService($em, $this->createMock(QuestProgressService::class), $this->createMock(GameShopWearableFactory::class));
+        $service = new UserStoreService($em, $this->createMock(QuestProgressService::class), $this->createMock(GameShopWearableFactory::class), $this->createMock(DailyChallengeService::class));
 
         $this->expectException(ResourceNotFoundException::class);
         $this->expectExceptionMessage('storeSlotNotFound');
@@ -47,7 +48,7 @@ final class UserStoreServiceTest extends TestCase
         $storeRepo = $this->createMock(EntityRepository::class);
         $storeRepo->method('find')->willReturn($slot);
         $this->mockTransactionalEm($em, $user, $storeRepo);
-        $service = new UserStoreService($em, $this->createMock(QuestProgressService::class), $this->createMock(GameShopWearableFactory::class));
+        $service = new UserStoreService($em, $this->createMock(QuestProgressService::class), $this->createMock(GameShopWearableFactory::class), $this->createMock(DailyChallengeService::class));
 
         $this->expectException(ResourceNotFoundException::class);
         $this->expectExceptionMessage('userStoreNotFound');
@@ -70,7 +71,7 @@ final class UserStoreServiceTest extends TestCase
         $storeRepo = $this->createMock(EntityRepository::class);
         $storeRepo->method('find')->willReturn($slot);
         $this->mockTransactionalEm($em, $user, $storeRepo);
-        $service = new UserStoreService($em, $this->createMock(QuestProgressService::class), $this->createMock(GameShopWearableFactory::class));
+        $service = new UserStoreService($em, $this->createMock(QuestProgressService::class), $this->createMock(GameShopWearableFactory::class), $this->createMock(DailyChallengeService::class));
 
         $this->expectException(OperationForbiddenException::class);
         $this->expectExceptionMessage('storeSlotNotYours');
@@ -96,7 +97,7 @@ final class UserStoreServiceTest extends TestCase
         $storeRepo = $this->createMock(EntityRepository::class);
         $storeRepo->method('find')->willReturn($slot);
         $this->mockTransactionalEm($em, $user, $storeRepo);
-        $service = new UserStoreService($em, $this->createMock(QuestProgressService::class), $this->createMock(GameShopWearableFactory::class));
+        $service = new UserStoreService($em, $this->createMock(QuestProgressService::class), $this->createMock(GameShopWearableFactory::class), $this->createMock(DailyChallengeService::class));
 
         $this->expectException(BusinessRuleException::class);
         $this->expectExceptionMessage('noFreeStorageSlot');
@@ -112,7 +113,7 @@ final class UserStoreServiceTest extends TestCase
 
         $em = $this->createMock(EntityManagerInterface::class);
         $this->mockTransactionalEmOnly($em, $user);
-        $service = new UserStoreService($em, $this->createMock(QuestProgressService::class), $this->createMock(GameShopWearableFactory::class));
+        $service = new UserStoreService($em, $this->createMock(QuestProgressService::class), $this->createMock(GameShopWearableFactory::class), $this->createMock(DailyChallengeService::class));
 
         $this->expectException(BusinessRuleException::class);
         $this->expectExceptionMessage('notEnoughDiamonds');
@@ -134,7 +135,7 @@ final class UserStoreServiceTest extends TestCase
         $this->mockTransactionalEmOnly($em, $user);
         $em->expects(self::once())->method('flush');
 
-        $service = new UserStoreService($em, $this->createMock(QuestProgressService::class), $this->createMock(GameShopWearableFactory::class));
+        $service = new UserStoreService($em, $this->createMock(QuestProgressService::class), $this->createMock(GameShopWearableFactory::class), $this->createMock(DailyChallengeService::class));
         $service->sellItem($user, 42);
 
         self::assertSame(150, $user->getGold());

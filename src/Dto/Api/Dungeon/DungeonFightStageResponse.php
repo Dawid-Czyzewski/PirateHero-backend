@@ -8,7 +8,7 @@ final readonly class DungeonFightStageResponse
 {
     /**
      * @param list<DungeonBattleLogEntryDto> $logs
-     * @param array<string, int> $progress
+     * @param array{normal: array<string, int>, hard: array<string, int>} $progress
      * @param array{gold: int, diamonds: int, item: array<string, mixed>|null}|null $completionReward
      * @param array<string, mixed>|null $rewardItem
      * @param array{
@@ -47,7 +47,7 @@ final readonly class DungeonFightStageResponse
      *     opponentMaxHp: int,
      *     fameEarned: int,
      *     famePointsChange: int,
-     *     progress: array<string, int>,
+     *     progress: array{normal: array<string, int>, hard: array<string, int>},
      *     opponent: array{
      *         id: string,
      *         name: string,

@@ -18,6 +18,8 @@ final class DungeonTest extends ApiWebTestCase
         $this->assertJsonEnvelopeSuccess($client->getResponse());
         $body = json_decode($client->getResponse()->getContent() ?: '', true, 512, \JSON_THROW_ON_ERROR);
         self::assertArrayHasKey('progress', $body['data']);
+        self::assertArrayHasKey('normal', $body['data']['progress']);
+        self::assertArrayHasKey('hard', $body['data']['progress']);
         self::assertArrayHasKey('playerStats', $body['data']);
         self::assertArrayHasKey('cooldownSecondsRemaining', $body['data']);
         self::assertSame(0, $body['data']['cooldownSecondsRemaining']);
@@ -65,7 +67,7 @@ final class DungeonTest extends ApiWebTestCase
         self::assertArrayHasKey('logs', $body['data']);
         self::assertArrayHasKey('opponent', $body['data']);
         if ($body['data']['won'] === true) {
-            self::assertSame(1, $body['data']['progress']['krypta'] ?? 0);
+            self::assertSame(1, $body['data']['progress']['normal']['krypta'] ?? 0);
             self::assertArrayHasKey('rewards', $body['data']);
             self::assertSame(40, $body['data']['rewards']['gold']);
             self::assertSame(8, $body['data']['rewards']['exp']);

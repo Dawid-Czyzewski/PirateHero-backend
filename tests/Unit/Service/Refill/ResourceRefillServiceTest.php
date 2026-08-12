@@ -14,6 +14,7 @@ use App\Enum\RefillType;
 use App\Exception\BusinessRuleException;
 use App\Repository\UserRefillRepository;
 use App\Service\Economy\BoosterService;
+use App\Service\Progression\DailyChallengeService;
 use App\Service\Refill\ResourceRefillService;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -179,7 +180,7 @@ final class ResourceRefillServiceTest extends TestCase
         BoosterService $booster,
         UserRefillRepository $repo,
     ): ResourceRefillService {
-        return new ResourceRefillService($em, $booster, $repo);
+        return new ResourceRefillService($em, $booster, $repo, $this->createMock(DailyChallengeService::class));
     }
 
     private function mockTransactionalEm(User $user): EntityManagerInterface

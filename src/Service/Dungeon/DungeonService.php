@@ -13,6 +13,7 @@ use App\Dungeon\DungeonStageRewardCalculator;
 use App\Entity\User;
 use App\Entity\UserDungeonProgress;
 use App\Entity\WearableItem;
+use App\Enum\DungeonDifficulty;
 use App\Enum\DungeonId;
 use App\Exception\BusinessRuleException;
 use App\Mapper\Api\DungeonMapper;
@@ -46,7 +47,7 @@ class DungeonService
 
     /**
      * @return array{
-     *     progress: array<string, int>,
+     *     progress: array{normal: array<string, int>, hard: array<string, int>},
      *     playerStats: array{
      *         level: int,
      *         strength: int,
@@ -65,7 +66,7 @@ class DungeonService
         $cooldown = $this->resolveCooldown($user);
 
         return DungeonMapper::progressResponse(
-            $this->progressRepository->getProgressMapForUser($user),
+            $this->progressRepository->getProgressByDifficultyForUser($user),
             $this->buildPlayerCombatStats($user),
             $cooldown['cooldownUntil'],
             $cooldown['cooldownSecondsRemaining'],
@@ -73,49 +74,25 @@ class DungeonService
     }
 
     /**
-     * @return array{
-     *     won: bool,
-     *     logs: list<array{attackerIsPlayer: bool, damage: int, critical: bool}>,
-     *     playerMaxHp: int,
-     *     opponentMaxHp: int,
-     *     fameEarned: int,
-     *     famePointsChange: int,
-     *     progress: array<string, int>,
-     *     opponent: array{
-     *         id: string,
-     *         name: string,
-     *         enemyNameKey: string,
-     *         avatarId: string,
-     *         level: int,
-     *         famePoints: int,
-     *         strength: int,
-     *         agility: int,
-     *         endurance: int,
-     *         intelligence: int,
-     *         luck: int
-     *     },
-     *     rewards: array{gold: int, exp: int},
-     *     completionReward: array{gold: int, diamonds: int, item: array<string, mixed>|null}|null,
-     *     dungeonCompleted: bool,
-     *     rewardItem: array<string, mixed>|null,
-     *     updatedUser: array{
-     *         gold: int,
-     *         diamonds: int,
-     *         experiencePoints: int,
-     *         freeSkillPointsAvailable: int,
-     *         level: array{name: string, expToNextLevel: int},
-     *         storage?: array{id: int|string, slots: list<array<string, mixed>>}
-     *     }|null
-     * }
+     * @return array<string, mixed>
      */
-    public function fightStage(User $user, string $dungeonIdRaw, int $stage): array
-    {
+    public function fightStage(
+        User $user,
+        string $dungeonIdRaw,
+        int $stage,
+        string $difficultyRaw = 'normal',
+    ): array {
         $this->timedActivityGuard->assertNoTimedActivity($user);
         $this->assertDungeonCooldownClear($user);
 
         $dungeonId = DungeonId::tryFromString($dungeonIdRaw);
         if ($dungeonId === null) {
             throw new BusinessRuleException('dungeonNotFound');
+        }
+
+        $difficulty = DungeonDifficulty::tryFromString($difficultyRaw);
+        if ($difficulty === null) {
+            throw new BusinessRuleException('dungeonInvalidPayload');
         }
 
         $dungeon = DungeonCatalog::get($dungeonId);
@@ -131,16 +108,38 @@ class DungeonService
             throw new BusinessRuleException('dungeonLocked');
         }
 
-        $progress = $this->progressRepository->findOneForUserDungeon($user, $dungeonId->value);
+        if ($difficulty === DungeonDifficulty::Hard) {
+            $normalCleared = $this->progressRepository
+                ->findOneForUserDungeon($user, $dungeonId->value, DungeonDifficulty::Normal->value)
+                ?->getClearedStage() ?? 0;
+            if ($normalCleared < DungeonCatalog::STAGES_PER_DUNGEON) {
+                throw new BusinessRuleException('dungeonHardLocked');
+            }
+        }
+
+        $progress = $this->progressRepository->findOneForUserDungeon(
+            $user,
+            $dungeonId->value,
+            $difficulty->value,
+        );
         $cleared = $progress?->getClearedStage() ?? 0;
-        if ($stage !== $cleared + 1) {
+        $isReplay = $difficulty === DungeonDifficulty::Hard
+            && $cleared >= DungeonCatalog::STAGES_PER_DUNGEON;
+
+        if ($isReplay) {
+        } elseif ($stage !== $cleared + 1) {
             throw new BusinessRuleException('dungeonStageLocked');
         }
 
         $playerStats = $this->buildPlayerCombatStats($user);
-        $opponent = DungeonCatalog::buildOpponent($dungeonId, $stage, $dungeon['enemyNameKey']);
+        $opponent = DungeonCatalog::buildOpponent(
+            $dungeonId,
+            $stage,
+            $dungeon['enemyNameKey'],
+            $difficulty,
+        );
 
-        $rng = new Mulberry32Randomizer(DungeonCatalog::seed($dungeonId, $stage));
+        $rng = new Mulberry32Randomizer(DungeonCatalog::seed($dungeonId, $stage, $difficulty));
         $battle = $this->battleSimulator->simulate($playerStats, $opponent, $rng);
 
         $rewards = new DungeonStageReward(0, 0);
@@ -150,18 +149,18 @@ class DungeonService
         $updatedUser = null;
 
         if ($battle['won']) {
-            $winPayload = $this->applyStageWin($user, $dungeonId, $stage, $progress);
+            $winPayload = $this->applyStageWin($user, $dungeonId, $stage, $progress, $difficulty, $isReplay);
             $rewards = $winPayload['rewards'];
             $completionReward = $winPayload['completionReward'];
             $rewardItem = $winPayload['rewardItem'];
             $dungeonCompleted = $winPayload['dungeonCompleted'];
             $updatedUser = $winPayload['updatedUser'];
         } else {
-            $this->applyStageLoss($user);
+            $this->applyStageLoss($user, $difficulty);
         }
 
         $cooldown = $this->resolveCooldown($user);
-        $battle['progress'] = $this->progressRepository->getProgressMapForUser($user);
+        $battle['progress'] = $this->progressRepository->getProgressByDifficultyForUser($user);
         $battle['opponent'] = $opponent;
         $battle['rewards'] = $rewards->toArray();
         $battle['completionReward'] = $completionReward;
@@ -188,6 +187,8 @@ class DungeonService
         DungeonId $dungeonId,
         int $stage,
         ?UserDungeonProgress $progress,
+        DungeonDifficulty $difficulty,
+        bool $isReplay,
     ): array {
         $connection = $this->entityManager->getConnection();
         $connection->beginTransaction();
@@ -198,9 +199,16 @@ class DungeonService
                 throw new BusinessRuleException('dungeonInvalidPayload');
             }
 
-            $progress = $this->progressRepository->findOneForUserDungeon($lockedUser, $dungeonId->value);
+            $progress = $this->progressRepository->findOneForUserDungeon(
+                $lockedUser,
+                $dungeonId->value,
+                $difficulty->value,
+            );
             $cleared = $progress?->getClearedStage() ?? 0;
-            if ($stage !== $cleared + 1) {
+            $replayAllowed = $difficulty === DungeonDifficulty::Hard
+                && $cleared >= DungeonCatalog::STAGES_PER_DUNGEON;
+
+            if (!$replayAllowed && $stage !== $cleared + 1) {
                 throw new BusinessRuleException('dungeonStageLocked');
             }
 
@@ -208,12 +216,18 @@ class DungeonService
                 $progress = new UserDungeonProgress();
                 $progress->setUser($lockedUser);
                 $progress->setDungeonId($dungeonId->value);
+                $progress->setDifficulty($difficulty->value);
                 $this->entityManager->persist($progress);
             }
-            $progress->setClearedStage($stage);
-            $lockedUser->setDungeonLostAt(null);
 
-            $rewards = $this->stageRewardCalculator->forStage($dungeonId, $stage);
+            if (!$replayAllowed) {
+                $progress->setClearedStage($stage);
+            }
+
+            $lockedUser->setDungeonLostAt(null);
+            $lockedUser->setDungeonLossCooldownSeconds(null);
+
+            $rewards = $this->stageRewardCalculator->forStage($dungeonId, $stage, $difficulty);
             $userMutated = true;
             if (!$rewards->isEmpty()) {
                 $lockedUser->addGold($rewards->gold);
@@ -226,8 +240,8 @@ class DungeonService
             $grantedCompletionItem = null;
 
             $isFinalStage = $stage === DungeonCatalog::STAGES_PER_DUNGEON;
-            if ($isFinalStage && !$progress->isCompletionRewardClaimed()) {
-                $completion = $this->completionRewardCalculator->forDungeon($dungeonId);
+            if (!$isReplay && $isFinalStage && !$progress->isCompletionRewardClaimed()) {
+                $completion = $this->completionRewardCalculator->forDungeon($dungeonId, $difficulty);
                 if (!$completion->isEmpty()) {
                     $grantedCompletionItem = $this->applyCompletionReward($lockedUser, $completion);
                     $progress->setCompletionRewardClaimed(true);
@@ -252,8 +266,9 @@ class DungeonService
             $connection->commit();
 
             $user->setDungeonLostAt(null);
+            $user->setDungeonLossCooldownSeconds(null);
 
-            if ($dungeonCompleted) {
+            if ($dungeonCompleted && $difficulty === DungeonDifficulty::Normal) {
                 $this->titleService->syncUnlocks($lockedUser);
                 $this->questProgressService->checkDungeonCompletedProgress($lockedUser);
             }
@@ -281,7 +296,7 @@ class DungeonService
         }
     }
 
-    private function applyStageLoss(User $user): void
+    private function applyStageLoss(User $user, DungeonDifficulty $difficulty): void
     {
         $connection = $this->entityManager->getConnection();
         $connection->beginTransaction();
@@ -292,13 +307,19 @@ class DungeonService
                 throw new BusinessRuleException('dungeonInvalidPayload');
             }
 
+            $cooldownSeconds = $difficulty === DungeonDifficulty::Hard
+                ? DungeonConstants::HARD_LOSS_COOLDOWN_SECONDS
+                : DungeonConstants::LOSS_COOLDOWN_SECONDS;
+
             $lostAt = new \DateTimeImmutable();
             $lockedUser->setDungeonLostAt($lostAt);
+            $lockedUser->setDungeonLossCooldownSeconds($cooldownSeconds);
             $this->entityManager->persist($lockedUser);
             $this->entityManager->flush();
             $connection->commit();
 
             $user->setDungeonLostAt($lostAt);
+            $user->setDungeonLossCooldownSeconds($cooldownSeconds);
         } catch (\Throwable $e) {
             $connection->rollBack();
             throw $e;
@@ -326,9 +347,10 @@ class DungeonService
             ];
         }
 
+        $seconds = $user->getDungeonLossCooldownSeconds() ?? DungeonConstants::LOSS_COOLDOWN_SECONDS;
         $now ??= new \DateTimeImmutable();
         $until = \DateTimeImmutable::createFromInterface($lostAt)
-            ->modify('+'.DungeonConstants::LOSS_COOLDOWN_SECONDS.' seconds');
+            ->modify('+'.$seconds.' seconds');
         $remaining = $until->getTimestamp() - $now->getTimestamp();
         if ($remaining <= 0) {
             return [

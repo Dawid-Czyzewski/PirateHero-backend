@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Dungeon;
 
 use App\Domain\Constants\DungeonConstants;
+use App\Enum\DungeonDifficulty;
 use App\Enum\DungeonId;
 
 
@@ -50,10 +51,10 @@ final class DungeonCatalog
         return null;
     }
 
-    public static function seed(DungeonId $dungeonId, int $stage): int
+    public static function seed(DungeonId $dungeonId, int $stage, DungeonDifficulty $difficulty = DungeonDifficulty::Normal): int
     {
         $h = $stage * 997;
-        $raw = $dungeonId->value;
+        $raw = $dungeonId->value.'|'.$difficulty->value;
         $len = strlen($raw);
         for ($i = 0; $i < $len; ++$i) {
             $h = ($h * 31 + ord($raw[$i])) & 0x7FFFFFFF;
@@ -77,15 +78,22 @@ final class DungeonCatalog
      *     luck: int
      * }
      */
-    public static function buildOpponent(DungeonId $dungeonId, int $stage, string $displayName): array
-    {
+    public static function buildOpponent(
+        DungeonId $dungeonId,
+        int $stage,
+        string $displayName,
+        DungeonDifficulty $difficulty = DungeonDifficulty::Normal,
+    ): array {
         $dungeon = self::get($dungeonId);
         if ($dungeon === null) {
             throw new \InvalidArgumentException('Unknown dungeon');
         }
 
-        $enemyHp = (int) round($dungeon['baseHp'] * (1 + ($stage - 1) * DungeonConstants::STAGE_HP_SCALE));
-        $enemyDmg = (int) round($dungeon['baseDmg'] * (1 + ($stage - 1) * DungeonConstants::STAGE_DAMAGE_SCALE));
+        $hpMult = $difficulty === DungeonDifficulty::Hard ? DungeonConstants::HARD_HP_MULTIPLIER : 1.0;
+        $dmgMult = $difficulty === DungeonDifficulty::Hard ? DungeonConstants::HARD_DAMAGE_MULTIPLIER : 1.0;
+
+        $enemyHp = (int) round($dungeon['baseHp'] * (1 + ($stage - 1) * DungeonConstants::STAGE_HP_SCALE) * $hpMult);
+        $enemyDmg = (int) round($dungeon['baseDmg'] * (1 + ($stage - 1) * DungeonConstants::STAGE_DAMAGE_SCALE) * $dmgMult);
         $endurance = max(1, (int) ceil($enemyHp / DungeonConstants::HP_TO_ENDURANCE_DIVISOR));
         $strength = max(DungeonConstants::MIN_STRENGTH, $enemyDmg);
 

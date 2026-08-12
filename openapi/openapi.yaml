@@ -2515,6 +2515,10 @@ paths:
                 stage:
                   type: integer
                   minimum: 1
+                difficulty:
+                  type: string
+                  enum: [normal, hard]
+                  default: normal
       responses:
         200:
           description: Fight result
@@ -4265,8 +4269,16 @@ components:
       properties:
         progress:
           type: object
-          additionalProperties:
-            type: integer
+          required: [normal, hard]
+          properties:
+            normal:
+              type: object
+              additionalProperties:
+                type: integer
+            hard:
+              type: object
+              additionalProperties:
+                type: integer
         playerStats:
           type: object
         cooldownUntil:
@@ -4294,8 +4306,16 @@ components:
           type: integer
         progress:
           type: object
-          additionalProperties:
-            type: integer
+          required: [normal, hard]
+          properties:
+            normal:
+              type: object
+              additionalProperties:
+                type: integer
+            hard:
+              type: object
+              additionalProperties:
+                type: integer
         opponent:
           type: object
         rewards:

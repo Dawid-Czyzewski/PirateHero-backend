@@ -7,7 +7,7 @@ namespace App\Dto\Api\Dungeon;
 final readonly class DungeonProgressResponse
 {
     /**
-     * @param array<string, int> $progress
+     * @param array{normal: array<string, int>, hard: array<string, int>} $progress
      */
     public function __construct(
         public array $progress,
@@ -19,7 +19,7 @@ final readonly class DungeonProgressResponse
 
     /**
      * @return array{
-     *     progress: array<string, int>,
+     *     progress: array{normal: array<string, int>, hard: array<string, int>},
      *     playerStats: array{
      *         level: int,
      *         strength: int,

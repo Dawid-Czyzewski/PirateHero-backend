@@ -71,6 +71,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(name: 'dungeon_lost_at', nullable: true)]
     private ?\DateTimeImmutable $dungeonLostAt = null;
 
+    #[ORM\Column(name: 'dungeon_loss_cooldown_seconds', nullable: true)]
+    private ?int $dungeonLossCooldownSeconds = null;
+
     #[ORM\Column]
     #[Groups(['user:read'])]
     private ?int $energyPoints = null;
@@ -437,6 +440,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setDungeonLostAt(?\DateTimeImmutable $dungeonLostAt): static
     {
         $this->dungeonLostAt = $dungeonLostAt;
+
+        return $this;
+    }
+
+    public function getDungeonLossCooldownSeconds(): ?int
+    {
+        return $this->dungeonLossCooldownSeconds;
+    }
+
+    public function setDungeonLossCooldownSeconds(?int $dungeonLossCooldownSeconds): static
+    {
+        $this->dungeonLossCooldownSeconds = $dungeonLossCooldownSeconds;
 
         return $this;
     }

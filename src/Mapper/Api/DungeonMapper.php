@@ -14,7 +14,7 @@ use App\Dto\Api\Dungeon\DungeonStageRewardsDto;
 final readonly class DungeonMapper
 {
     /**
-     * @param array<string, int> $progress
+     * @param array{normal: array<string, int>, hard: array<string, int>} $progress
      * @param array{level: int, strength: int, agility: int, endurance: int, intelligence: int, luck: int} $playerStats
      */
     public static function progressResponse(
@@ -54,7 +54,7 @@ final readonly class DungeonMapper
      *     opponentMaxHp: int,
      *     fameEarned: int,
      *     famePointsChange: int,
-     *     progress: array<string, int>,
+     *     progress: array{normal: array<string, int>, hard: array<string, int>},
      *     opponent: array{
      *         id: string,
      *         name: string,

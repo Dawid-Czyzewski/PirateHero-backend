@@ -36,7 +36,10 @@ final class DungeonServiceTest extends TestCase
 
         $progressRepo = $this->createMock(UserDungeonProgressRepository::class);
         $progressRepo->method('findOneForUserDungeon')->willReturn(null);
-        $progressRepo->method('getProgressMapForUser')->willReturn(['krypta' => 1]);
+        $progressRepo->method('getProgressByDifficultyForUser')->willReturn([
+            'normal' => ['krypta' => 1],
+            'hard' => [],
+        ]);
 
         $em = $this->createMock(EntityManagerInterface::class);
         $this->mockTransactionalEntityManager($em, $user);
@@ -83,7 +86,10 @@ final class DungeonServiceTest extends TestCase
 
         $progressRepo = $this->createMock(UserDungeonProgressRepository::class);
         $progressRepo->method('findOneForUserDungeon')->willReturn(null);
-        $progressRepo->method('getProgressMapForUser')->willReturn([]);
+        $progressRepo->method('getProgressByDifficultyForUser')->willReturn([
+            'normal' => [],
+            'hard' => [],
+        ]);
 
         $em = $this->createMock(EntityManagerInterface::class);
         $this->mockTransactionalEntityManager($em, $user);
@@ -121,6 +127,7 @@ final class DungeonServiceTest extends TestCase
         self::assertSame(100, $user->getGold());
         self::assertSame(50, $user->getExperiencePoints());
         self::assertNotNull($user->getDungeonLostAt());
+        self::assertSame(3600, $user->getDungeonLossCooldownSeconds());
         self::assertGreaterThan(0, $result['cooldownSecondsRemaining']);
     }
 
@@ -150,7 +157,10 @@ final class DungeonServiceTest extends TestCase
 
         $progressRepo = $this->createMock(UserDungeonProgressRepository::class);
         $progressRepo->method('findOneForUserDungeon')->willReturn(null);
-        $progressRepo->method('getProgressMapForUser')->willReturn(['krypta' => 1]);
+        $progressRepo->method('getProgressByDifficultyForUser')->willReturn([
+            'normal' => ['krypta' => 1],
+            'hard' => [],
+        ]);
 
         $em = $this->createMock(EntityManagerInterface::class);
         $this->mockTransactionalEntityManager($em, $user);
@@ -219,7 +229,10 @@ final class DungeonServiceTest extends TestCase
 
         $progressRepo = $this->createMock(UserDungeonProgressRepository::class);
         $progressRepo->method('findOneForUserDungeon')->willReturn($progress);
-        $progressRepo->method('getProgressMapForUser')->willReturn(['krypta' => 10]);
+        $progressRepo->method('getProgressByDifficultyForUser')->willReturn([
+            'normal' => ['krypta' => 10],
+            'hard' => [],
+        ]);
 
         $em = $this->createMock(EntityManagerInterface::class);
         $this->mockTransactionalEntityManager($em, $user);
@@ -257,6 +270,39 @@ final class DungeonServiceTest extends TestCase
         self::assertTrue($result['won']);
         self::assertNull($result['completionReward']);
         self::assertFalse($result['dungeonCompleted']);
+    }
+
+    public function testHardModeLockedUntilNormalClear(): void
+    {
+        $user = $this->makeDungeonUser(gold: 100, exp: 50);
+
+        $progressRepo = $this->createMock(UserDungeonProgressRepository::class);
+        $progressRepo->method('findOneForUserDungeon')->willReturnCallback(
+            static function ($u, string $dungeonId, string $difficulty = 'normal') {
+                if ($difficulty === 'normal') {
+                    $p = new UserDungeonProgress();
+                    $p->setDungeonId($dungeonId);
+                    $p->setClearedStage(5);
+
+                    return $p;
+                }
+
+                return null;
+            }
+        );
+
+        $service = $this->makeDungeonService(
+            $this->createMock(EntityManagerInterface::class),
+            $progressRepo,
+            $this->createMock(ShopBoosterSessionService::class),
+            $this->createMock(DungeonBattleSimulator::class),
+            $this->createMock(LevelService::class),
+        );
+
+        $this->expectException(BusinessRuleException::class);
+        $this->expectExceptionMessage('dungeonHardLocked');
+
+        $service->fightStage($user, DungeonId::Krypta->value, 1, 'hard');
     }
 
     private function mockTransactionalEntityManager(EntityManagerInterface $em, User $user): void

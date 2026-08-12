@@ -15,6 +15,7 @@ use App\Exception\ResourceNotFoundException;
 use App\Repository\BoosterTemplateRepository;
 use App\Repository\UserAvailableBoosterRepository;
 use App\Repository\UserBoosterRepository;
+use App\Service\Progression\DailyChallengeService;
 use App\Service\Random\RandomizerInterface;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
@@ -28,6 +29,7 @@ class BoosterService
         private UserAvailableBoosterRepository $userAvailableBoosterRepository,
         private UserBoosterRepository $userBoosterRepository,
         private LoggerInterface $logger,
+        private DailyChallengeService $dailyChallengeService,
         private ?RandomizerInterface $randomizer = null,
     ) {
     }
@@ -134,6 +136,7 @@ class BoosterService
 
             if ($userAvailableBooster->isUseGold()) {
                 $lockedUser->spendGold($price);
+                $this->dailyChallengeService->recordGoldSpent($lockedUser, $price);
             } else {
                 $lockedUser->spendDiamonds($price);
             }

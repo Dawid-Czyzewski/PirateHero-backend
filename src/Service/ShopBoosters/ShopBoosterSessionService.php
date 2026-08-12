@@ -14,6 +14,7 @@ use App\Exception\ResourceNotFoundException;
 use App\Repository\ShopBoosterRepository;
 use App\Repository\UserShopBoosterSessionRepository;
 use App\Service\Economy\BoosterService;
+use App\Service\Progression\DailyChallengeService;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -25,6 +26,7 @@ class ShopBoosterSessionService implements CombatStatisticsProvider
         private UserShopBoosterSessionRepository $sessionRepository,
         private BoosterService $boosterService,
         private ShopBoosterEffectParser $effectParser,
+        private DailyChallengeService $dailyChallengeService,
     ) {
     }
 
@@ -198,6 +200,7 @@ class ShopBoosterSessionService implements CombatStatisticsProvider
             $price = $def->getPrice();
             if ($def->getCurrency() === ShopBoosterCurrency::Gold) {
                 $lockedUser->spendGold($price);
+                $this->dailyChallengeService->recordGoldSpent($lockedUser, $price);
             } else {
                 $lockedUser->spendDiamonds($price);
             }

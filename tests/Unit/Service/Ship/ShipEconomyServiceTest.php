@@ -13,6 +13,7 @@ use App\Exception\BusinessRuleException;
 use App\Exception\OperationForbiddenException;
 use App\Repository\ShipMemberRepository;
 use App\Repository\ShipUpgradeLevelCostRepository;
+use App\Service\Progression\DailyChallengeService;
 use App\Service\Ship\ShipChatService;
 use App\Service\Ship\ShipEconomyService;
 use App\Service\Ship\ShipUpgradePricingService;
@@ -63,7 +64,7 @@ final class ShipEconomyServiceTest extends TestCase
         $chat = $this->createMock(ShipChatService::class);
         $chat->expects(self::never())->method('publishDepositSystemMessage');
 
-        $service = new ShipEconomyService($em, $repo, $chat, $this->pricingService());
+        $service = new ShipEconomyService($em, $repo, $chat, $this->pricingService(), $this->createMock(DailyChallengeService::class));
 
         $this->expectException(OperationForbiddenException::class);
         $this->expectExceptionMessage('shipMembershipRequired');
@@ -82,7 +83,7 @@ final class ShipEconomyServiceTest extends TestCase
         $chat = $this->createMock(ShipChatService::class);
         $chat->expects(self::never())->method('publishDepositSystemMessage');
 
-        $service = new ShipEconomyService($em, $repo, $chat, $this->pricingService());
+        $service = new ShipEconomyService($em, $repo, $chat, $this->pricingService(), $this->createMock(DailyChallengeService::class));
 
         $this->expectException(BusinessRuleException::class);
         $this->expectExceptionMessage('nothingToDeposit');
@@ -94,7 +95,7 @@ final class ShipEconomyServiceTest extends TestCase
         $em = $this->createEntityManagerMock(0, false, 1);
 
         $chat = $this->createMock(ShipChatService::class);
-        $service = new ShipEconomyService($em, $this->createMock(ShipMemberRepository::class), $chat, $this->pricingService());
+        $service = new ShipEconomyService($em, $this->createMock(ShipMemberRepository::class), $chat, $this->pricingService(), $this->createMock(DailyChallengeService::class));
 
         $this->expectException(BusinessRuleException::class);
         $this->expectExceptionMessage('invalidUpgradeType');
@@ -113,7 +114,7 @@ final class ShipEconomyServiceTest extends TestCase
 
         $chat = $this->createMock(ShipChatService::class);
         $chat->expects(self::once())->method('publishUpgradeSystemMessage')->with($ship, 'skills', 1);
-        $service = new ShipEconomyService($em, $this->createMock(ShipMemberRepository::class), $chat, $this->pricingService());
+        $service = new ShipEconomyService($em, $this->createMock(ShipMemberRepository::class), $chat, $this->pricingService(), $this->createMock(DailyChallengeService::class));
 
         $result = $service->upgradeShip($ship, 'skills');
 
@@ -139,7 +140,7 @@ final class ShipEconomyServiceTest extends TestCase
 
         $chat = $this->createMock(ShipChatService::class);
         $chat->expects(self::once())->method('publishUpgradeSystemMessage')->with($ship, 'hull', 1);
-        $service = new ShipEconomyService($em, $this->createMock(ShipMemberRepository::class), $chat, $this->pricingService());
+        $service = new ShipEconomyService($em, $this->createMock(ShipMemberRepository::class), $chat, $this->pricingService(), $this->createMock(DailyChallengeService::class));
 
         $result = $service->upgradeShip($ship, 'hull');
 
@@ -167,7 +168,7 @@ final class ShipEconomyServiceTest extends TestCase
         $chat = $this->createMock(ShipChatService::class);
         $chat->expects(self::once())->method('publishDepositSystemMessage')->with($ship, $user, 100, 0);
 
-        $service = new ShipEconomyService($em, $repo, $chat, $this->pricingService());
+        $service = new ShipEconomyService($em, $repo, $chat, $this->pricingService(), $this->createMock(DailyChallengeService::class));
         $service->depositToShip($ship, $user, 100, 0);
 
         self::assertSame(900, $user->getGold());

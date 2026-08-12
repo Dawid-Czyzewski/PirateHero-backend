@@ -31,6 +31,7 @@ readonly class MissionService
         private readonly UserWriteLockExecutor $userWriteLockExecutor,
         private readonly TimedActivityLifecycle $timedActivityLifecycle,
         private readonly OwnedTimedActivityResolver $ownedTimedActivityResolver,
+        private readonly DailyChallengeService $dailyChallengeService,
     ) {
     }
 
@@ -166,6 +167,7 @@ readonly class MissionService
         $this->entityManager->persist($lockedUser);
         $this->entityManager->flush();
 
+        $this->dailyChallengeService->recordMissions($lockedUser, 1);
         $this->regenerateMissionsForUser($lockedUser);
 
         return [

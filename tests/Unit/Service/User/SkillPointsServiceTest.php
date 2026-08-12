@@ -11,6 +11,7 @@ use App\Entity\UserSkillPointsPrices;
 use App\Enum\UserStatType;
 use App\Exception\BusinessRuleException;
 use App\Exception\ResourceNotFoundException;
+use App\Service\Progression\DailyChallengeService;
 use App\Service\Progression\QuestProgressService;
 use App\Service\User\SkillPointsService;
 use Doctrine\DBAL\Connection;
@@ -25,6 +26,7 @@ final class SkillPointsServiceTest extends TestCase
         $service = new SkillPointsService(
             $this->createMock(EntityManagerInterface::class),
             $this->createMock(QuestProgressService::class),
+            $this->createMock(DailyChallengeService::class),
         );
 
         $this->expectException(BusinessRuleException::class);
@@ -41,7 +43,7 @@ final class SkillPointsServiceTest extends TestCase
         $em->expects(self::once())->method('persist')->with($user);
         $em->expects(self::once())->method('flush');
 
-        $service = new SkillPointsService($em, $this->createMock(QuestProgressService::class));
+        $service = new SkillPointsService($em, $this->createMock(QuestProgressService::class), $this->createMock(DailyChallengeService::class));
         $service->addFreeSkillPoints($user, 3);
 
         self::assertSame(5, $user->getFreeSkillPointsAvailable());
@@ -55,6 +57,7 @@ final class SkillPointsServiceTest extends TestCase
         $service = new SkillPointsService(
             $this->mockTransactionalEm($user),
             $this->createMock(QuestProgressService::class),
+            $this->createMock(DailyChallengeService::class),
         );
 
         $this->expectException(ResourceNotFoundException::class);
@@ -78,7 +81,7 @@ final class SkillPointsServiceTest extends TestCase
         $em->method('persist');
         $em->expects(self::once())->method('flush');
 
-        $service = new SkillPointsService($em, $this->createMock(QuestProgressService::class));
+        $service = new SkillPointsService($em, $this->createMock(QuestProgressService::class), $this->createMock(DailyChallengeService::class));
         $service->addSkillPoint($user, UserStatType::STRENGTH);
 
         self::assertSame(0, $user->getFreeSkillPointsAvailable());
@@ -114,7 +117,7 @@ final class SkillPointsServiceTest extends TestCase
         $quests = $this->createMock(QuestProgressService::class);
         $quests->expects(self::once())->method('checkAndUpdateProgress');
 
-        $service = new SkillPointsService($em, $quests);
+        $service = new SkillPointsService($em, $quests, $this->createMock(DailyChallengeService::class));
         $service->addSkillPoint($user, UserStatType::LUCK);
 
         self::assertSame(90, $user->getGold());

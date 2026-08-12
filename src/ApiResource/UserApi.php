@@ -11,6 +11,7 @@ use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\Post;
 use App\Controller\BestiaryController;
 use App\Controller\BoosterController;
+use App\Controller\DailyChallengeController;
 use App\Controller\DailyRewardController;
 use App\Controller\DungeonController;
 use App\Controller\FightController;
@@ -129,6 +130,24 @@ use App\Entity\User;
         new Post(
             uriTemplate: '/users/daily-rewards/claim',
             controller: DailyRewardController::class.'::claim',
+            security: "is_granted('IS_AUTHENTICATED_FULLY')",
+            read: false,
+        ),
+        new Get(
+            uriTemplate: '/users/daily-challenges',
+            controller: DailyChallengeController::class.'::getStatus',
+            security: "is_granted('IS_AUTHENTICATED_FULLY')",
+            read: false,
+        ),
+        new Post(
+            uriTemplate: '/users/daily-challenges/claim',
+            controller: DailyChallengeController::class.'::claimSlot',
+            security: "is_granted('IS_AUTHENTICATED_FULLY')",
+            read: false,
+        ),
+        new Post(
+            uriTemplate: '/users/daily-challenges/claim-bonus',
+            controller: DailyChallengeController::class.'::claimBonus',
             security: "is_granted('IS_AUTHENTICATED_FULLY')",
             read: false,
         ),

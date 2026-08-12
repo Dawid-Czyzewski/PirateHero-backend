@@ -9,7 +9,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: UserDungeonProgressRepository::class)]
 #[ORM\Table(name: 'user_dungeon_progress')]
-#[ORM\UniqueConstraint(name: 'UNIQ_USER_DUNGEON', fields: ['user', 'dungeonId'])]
+#[ORM\UniqueConstraint(name: 'UNIQ_USER_DUNGEON_DIFFICULTY', fields: ['user', 'dungeonId', 'difficulty'])]
 class UserDungeonProgress
 {
     #[ORM\Id]
@@ -23,6 +23,9 @@ class UserDungeonProgress
 
     #[ORM\Column(length: 32)]
     private string $dungeonId = '';
+
+    #[ORM\Column(length: 16, options: ['default' => 'normal'])]
+    private string $difficulty = 'normal';
 
     #[ORM\Column]
     private int $clearedStage = 0;
@@ -67,6 +70,18 @@ class UserDungeonProgress
     public function setDungeonId(string $dungeonId): static
     {
         $this->dungeonId = $dungeonId;
+
+        return $this;
+    }
+
+    public function getDifficulty(): string
+    {
+        return $this->difficulty;
+    }
+
+    public function setDifficulty(string $difficulty): static
+    {
+        $this->difficulty = $difficulty;
 
         return $this;
     }

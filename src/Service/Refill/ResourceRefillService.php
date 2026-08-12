@@ -12,6 +12,7 @@ use App\Exception\BusinessRuleException;
 use App\Exception\ResourceNotFoundException;
 use App\Repository\UserRefillRepository;
 use App\Service\Economy\BoosterService;
+use App\Service\Progression\DailyChallengeService;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -25,6 +26,7 @@ class ResourceRefillService
         private readonly EntityManagerInterface $entityManager,
         private readonly BoosterService $boosterService,
         private readonly UserRefillRepository $userRefillRepository,
+        private readonly DailyChallengeService $dailyChallengeService,
     ) {
     }
 
@@ -94,6 +96,7 @@ class ResourceRefillService
             $cost = $this->calculateRefillCost($lockedUser, $nextRefillNumber);
 
             $lockedUser->spendGold($cost, 'insufficientGold');
+            $this->dailyChallengeService->recordGoldSpent($lockedUser, $cost);
             $this->writePoints($lockedUser, $type, $max);
 
             $userRefill->setRefillCount($nextRefillNumber);
