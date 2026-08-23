@@ -7,4 +7,5 @@ namespace App\Service\Progression;
 final class TitleCodes
 {
     public const ROOKIE = 'rookie';
+    public const WEEKLY_CORSAIR = 'weekly_corsair';
 }

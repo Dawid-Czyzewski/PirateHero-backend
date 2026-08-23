@@ -12,6 +12,7 @@ use App\Exception\BusinessRuleException;
 use App\Exception\ResourceNotFoundException;
 use App\Service\Progression\DailyChallengeService;
 use App\Service\Progression\QuestProgressService;
+use App\Service\Progression\WeeklyContractService;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -23,6 +24,8 @@ class SkillPointsService
         private QuestProgressService $questProgressService,
         #[Autowire(lazy: true)]
         private DailyChallengeService $dailyChallengeService,
+        #[Autowire(lazy: true)]
+        private WeeklyContractService $weeklyContractService,
     ) {
     }
 
@@ -103,6 +106,7 @@ class SkillPointsService
         if ($goldCost > 0) {
             $this->questProgressService->checkAndUpdateProgress($user, QuestCategory::GOLD_SPENT, $goldCost);
             $this->dailyChallengeService->recordGoldSpent($user, $goldCost);
+            $this->weeklyContractService->recordGoldSpent($user, $goldCost);
         }
     }
 

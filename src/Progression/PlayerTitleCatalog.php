@@ -68,6 +68,7 @@ final class PlayerTitleCatalog
             self::row('legend_lord', TitleUnlockType::LEGENDARY_ITEMS_COLLECTED, 75, null, 52),
             self::row('greatest_explorer', TitleUnlockType::ITEMS_COLLECTED, 350, null, 53),
             self::row('eternal_captain', TitleUnlockType::LEVEL_REACHED, 300, null, 54),
+            self::row('weekly_corsair', TitleUnlockType::MANUAL, null, null, 200),
         ];
 
         foreach (LevelRankTitleCatalog::definitions() as $def) {

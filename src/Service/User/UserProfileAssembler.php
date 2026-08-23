@@ -193,6 +193,10 @@ final class UserProfileAssembler
                         'type' => $item->getType()?->value,
                         'rarity' => $item->getRarity()?->value,
                         'statistics' => $item->getStatistics()?->toClientArray(),
+                        'upgradeLevel' => $item->getUpgradeLevel(),
+                        'maxUpgradeLevel' => $item->getMaxUpgradeLevel(),
+                        'nextUpgradeCost' => $item->getNextUpgradeCost(),
+                        'price' => $item->getPrice(),
                     ];
                 }
 

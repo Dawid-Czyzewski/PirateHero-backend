@@ -16,6 +16,7 @@ use App\Repository\BoosterTemplateRepository;
 use App\Repository\UserAvailableBoosterRepository;
 use App\Repository\UserBoosterRepository;
 use App\Service\Progression\DailyChallengeService;
+use App\Service\Progression\WeeklyContractService;
 use App\Service\Random\RandomizerInterface;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
@@ -30,6 +31,7 @@ class BoosterService
         private UserBoosterRepository $userBoosterRepository,
         private LoggerInterface $logger,
         private DailyChallengeService $dailyChallengeService,
+        private WeeklyContractService $weeklyContractService,
         private ?RandomizerInterface $randomizer = null,
     ) {
     }
@@ -137,6 +139,7 @@ class BoosterService
             if ($userAvailableBooster->isUseGold()) {
                 $lockedUser->spendGold($price);
                 $this->dailyChallengeService->recordGoldSpent($lockedUser, $price);
+                $this->weeklyContractService->recordGoldSpent($lockedUser, $price);
             } else {
                 $lockedUser->spendDiamonds($price);
             }

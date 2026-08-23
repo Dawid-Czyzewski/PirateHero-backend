@@ -21,6 +21,7 @@ use App\Controller\UserActivateAccountController;
 use App\Controller\UserController;
 use App\Controller\UserRegisterController;
 use App\Controller\UserSkillPointsController;
+use App\Controller\WeeklyContractController;
 use App\Dto\UserRegisterDto;
 use App\Entity\User;
 
@@ -148,6 +149,18 @@ use App\Entity\User;
         new Post(
             uriTemplate: '/users/daily-challenges/claim-bonus',
             controller: DailyChallengeController::class.'::claimBonus',
+            security: "is_granted('IS_AUTHENTICATED_FULLY')",
+            read: false,
+        ),
+        new Get(
+            uriTemplate: '/users/weekly-contracts/status',
+            controller: WeeklyContractController::class.'::getStatus',
+            security: "is_granted('IS_AUTHENTICATED_FULLY')",
+            read: false,
+        ),
+        new Post(
+            uriTemplate: '/users/weekly-contracts/claim',
+            controller: WeeklyContractController::class.'::claim',
             security: "is_granted('IS_AUTHENTICATED_FULLY')",
             read: false,
         ),

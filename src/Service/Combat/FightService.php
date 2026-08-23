@@ -18,6 +18,7 @@ use App\Mapper\Api\FightMapper;
 use App\Service\Progression\DailyChallengeService;
 use App\Service\Progression\QuestProgressService;
 use App\Service\Progression\QuestService;
+use App\Service\Progression\WeeklyContractService;
 use App\Service\ShopBoosters\CombatStatisticsProvider;
 use App\Service\User\SimilarUsersResolver;
 use Doctrine\DBAL\LockMode;
@@ -33,6 +34,7 @@ readonly class FightService
         private readonly TurnBasedDuelResolver $duelResolver,
         private readonly CombatStatisticsProvider $combatStatisticsProvider,
         private readonly DailyChallengeService $dailyChallengeService,
+        private readonly WeeklyContractService $weeklyContractService,
     ) {
     }
 
@@ -134,10 +136,12 @@ readonly class FightService
                 $this->questProgressService->checkAndUpdateProgress($attacker, QuestCategory::FIGHTS_WON, 1);
                 $this->questProgressService->checkAndUpdateProgress($defender, QuestCategory::FIGHTS_LOST, 1);
                 $this->dailyChallengeService->recordArenaWins($attacker, 1);
+                $this->weeklyContractService->recordArenaWins($attacker, 1);
             } else {
                 $this->questProgressService->checkAndUpdateProgress($defender, QuestCategory::FIGHTS_WON, 1);
                 $this->questProgressService->checkAndUpdateProgress($attacker, QuestCategory::FIGHTS_LOST, 1);
                 $this->dailyChallengeService->recordArenaWins($defender, 1);
+                $this->weeklyContractService->recordArenaWins($defender, 1);
             }
 
             $opponentsNext = $this->getAvailableOpponents($attacker);

@@ -11,6 +11,7 @@ use App\Entity\User;
 use App\Exception\BusinessRuleException;
 use App\Exception\ResourceNotFoundException;
 use App\Service\Progression\DailyChallengeService;
+use App\Service\Progression\WeeklyContractService;
 use App\Service\Progression\MissionEconomyRoller;
 use App\Service\Progression\MissionRewardCalculator;
 use App\Service\Progression\MissionService;
@@ -151,6 +152,7 @@ final class MissionServiceTest extends TestCase
             new TimedActivityLifecycle($em),
             new OwnedTimedActivityResolver($em),
             $this->createMock(DailyChallengeService::class),
+            $this->createMock(WeeklyContractService::class),
         );
 
         $user = $this->makeUser();
@@ -186,6 +188,7 @@ final class MissionServiceTest extends TestCase
             new TimedActivityLifecycle($em),
             new OwnedTimedActivityResolver($em),
             $this->createMock(DailyChallengeService::class),
+            $this->createMock(WeeklyContractService::class),
         );
 
         $ship = $this->createMock(Ship::class);
@@ -244,6 +247,7 @@ final class MissionServiceTest extends TestCase
             new TimedActivityLifecycle($em),
             new OwnedTimedActivityResolver($em),
             $this->createMock(DailyChallengeService::class),
+            $this->createMock(WeeklyContractService::class),
         );
     }
 

@@ -18,6 +18,7 @@ use App\Repository\ShipMemberRepository;
 use App\Repository\ShipMessageRepository;
 use App\Repository\UserRepository;
 use App\Service\Progression\DailyChallengeService;
+use App\Service\Progression\WeeklyContractService;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -30,6 +31,7 @@ class ShipMembershipService
         private UserRepository $userRepository,
         private ShipChatService $shipChatService,
         private DailyChallengeService $dailyChallengeService,
+        private WeeklyContractService $weeklyContractService,
     ) {
     }
 
@@ -50,6 +52,7 @@ class ShipMembershipService
 
             $managedUser->spendGold(ShipConstants::CLUB_CREATION_COST, 'notEnoughGoldForShipCreation');
             $this->dailyChallengeService->recordGoldSpent($managedUser, ShipConstants::CLUB_CREATION_COST);
+            $this->weeklyContractService->recordGoldSpent($managedUser, ShipConstants::CLUB_CREATION_COST);
 
             $ship = new Ship();
             $ship->setTitle($title);

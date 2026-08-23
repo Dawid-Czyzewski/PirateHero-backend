@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\GameShop;
 
+use App\Domain\Constants\WearableUpgradeConstants;
 use App\Entity\ItemStatistics;
 use App\Entity\WearableItem;
 use App\Enum\WearableItemRarity;
@@ -48,6 +49,9 @@ final class GameShopItemViewNormalizer
             'price' => (int) $item->getPrice(),
             'rarity' => $this->rarityToClient($item->getRarity()),
             'stats' => $shopStats,
+            'upgradeLevel' => $item->getUpgradeLevel(),
+            'maxUpgradeLevel' => WearableUpgradeConstants::maxLevelFor($item->getRarity()),
+            'nextUpgradeCost' => $item->getNextUpgradeCost(),
         ];
     }
 

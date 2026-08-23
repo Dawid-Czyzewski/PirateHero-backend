@@ -100,6 +100,25 @@ class ItemStatistics
 
         return $this;
     }
+    
+    public function bumpPositiveStatsByOne(): void
+    {
+        if ($this->strongPoints > 0) {
+            ++$this->strongPoints;
+        }
+        if ($this->agilityPoints > 0) {
+            ++$this->agilityPoints;
+        }
+        if ($this->criticalChancePoints > 0) {
+            ++$this->criticalChancePoints;
+        }
+        if ($this->intelligencePoints > 0) {
+            ++$this->intelligencePoints;
+        }
+        if ($this->healthPoints > 0) {
+            ++$this->healthPoints;
+        }
+    }
 
     /**
      * Manual API payloads (preview, quest, coupon) — scalar columns only.

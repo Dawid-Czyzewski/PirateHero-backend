@@ -13,6 +13,7 @@ use App\Exception\BusinessRuleException;
 use App\Exception\OperationForbiddenException;
 use App\Repository\ShipMemberRepository;
 use App\Service\Progression\DailyChallengeService;
+use App\Service\Progression\WeeklyContractService;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -24,6 +25,7 @@ readonly class ShipEconomyService
         private ShipChatService $shipChatService,
         private ShipUpgradePricingService $shipUpgradePricingService,
         private DailyChallengeService $dailyChallengeService,
+        private WeeklyContractService $weeklyContractService,
     ) {
     }
 
@@ -52,7 +54,9 @@ readonly class ShipEconomyService
             if ($gold > 0) {
                 $user->spendGold($gold);
                 $this->dailyChallengeService->recordGoldSpent($user, $gold);
+                $this->weeklyContractService->recordGoldSpent($user, $gold);
             }
+            
             if ($diamonds > 0) {
                 $user->spendDiamonds($diamonds);
             }

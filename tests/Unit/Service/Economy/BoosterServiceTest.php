@@ -17,6 +17,7 @@ use App\Repository\UserAvailableBoosterRepository;
 use App\Repository\UserBoosterRepository;
 use App\Service\Economy\BoosterService;
 use App\Service\Progression\DailyChallengeService;
+use App\Service\Progression\WeeklyContractService;
 use App\Tests\Support\TransactionalEntityManagerMockTrait;
 use App\Tests\TestDoubles\UserStubFactory;
 use Doctrine\ORM\EntityManagerInterface;
@@ -39,6 +40,7 @@ final class BoosterServiceTest extends TestCase
             $this->createMock(UserBoosterRepository::class),
             $this->createMock(LoggerInterface::class),
             $this->createMock(DailyChallengeService::class),
+            $this->createMock(WeeklyContractService::class),
         );
 
         $this->expectException(ResourceNotFoundException::class);
@@ -68,6 +70,7 @@ final class BoosterServiceTest extends TestCase
             $this->createMock(UserBoosterRepository::class),
             $this->createMock(LoggerInterface::class),
             $this->createMock(DailyChallengeService::class),
+            $this->createMock(WeeklyContractService::class),
         );
 
         $this->expectException(OperationForbiddenException::class);
@@ -110,6 +113,7 @@ final class BoosterServiceTest extends TestCase
             $activeRepo,
             $this->createMock(LoggerInterface::class),
             $this->createMock(DailyChallengeService::class),
+            $this->createMock(WeeklyContractService::class),
         );
 
         $this->expectException(BusinessRuleException::class);
@@ -129,6 +133,7 @@ final class BoosterServiceTest extends TestCase
             $repo,
             $this->createMock(LoggerInterface::class),
             $this->createMock(DailyChallengeService::class),
+            $this->createMock(WeeklyContractService::class),
         );
 
         $this->expectException(ResourceNotFoundException::class);
@@ -154,6 +159,7 @@ final class BoosterServiceTest extends TestCase
             $repo,
             $this->createMock(LoggerInterface::class),
             $this->createMock(DailyChallengeService::class),
+            $this->createMock(WeeklyContractService::class),
         );
 
         $this->expectException(BusinessRuleException::class);
@@ -176,6 +182,7 @@ final class BoosterServiceTest extends TestCase
             $this->createMock(UserBoosterRepository::class),
             $this->createMock(LoggerInterface::class),
             $this->createMock(DailyChallengeService::class),
+            $this->createMock(WeeklyContractService::class),
         );
 
         self::assertSame($expected, $service->getAvailableBoostersForUser($user));
@@ -203,6 +210,7 @@ final class BoosterServiceTest extends TestCase
             $repo,
             $this->createMock(LoggerInterface::class),
             $this->createMock(DailyChallengeService::class),
+            $this->createMock(WeeklyContractService::class),
         );
 
         $service->calculateActualCapacity($user);
@@ -229,6 +237,7 @@ final class BoosterServiceTest extends TestCase
             $repo,
             $this->createMock(LoggerInterface::class),
             $this->createMock(DailyChallengeService::class),
+            $this->createMock(WeeklyContractService::class),
         );
 
         $service->cleanupExpiredBoostersAndGenerateNew($user);

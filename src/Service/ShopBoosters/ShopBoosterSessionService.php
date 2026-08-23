@@ -15,6 +15,7 @@ use App\Repository\ShopBoosterRepository;
 use App\Repository\UserShopBoosterSessionRepository;
 use App\Service\Economy\BoosterService;
 use App\Service\Progression\DailyChallengeService;
+use App\Service\Progression\WeeklyContractService;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -27,6 +28,7 @@ class ShopBoosterSessionService implements CombatStatisticsProvider
         private BoosterService $boosterService,
         private ShopBoosterEffectParser $effectParser,
         private DailyChallengeService $dailyChallengeService,
+        private WeeklyContractService $weeklyContractService,
     ) {
     }
 
@@ -201,6 +203,7 @@ class ShopBoosterSessionService implements CombatStatisticsProvider
             if ($def->getCurrency() === ShopBoosterCurrency::Gold) {
                 $lockedUser->spendGold($price);
                 $this->dailyChallengeService->recordGoldSpent($lockedUser, $price);
+                $this->weeklyContractService->recordGoldSpent($lockedUser, $price);
             } else {
                 $lockedUser->spendDiamonds($price);
             }

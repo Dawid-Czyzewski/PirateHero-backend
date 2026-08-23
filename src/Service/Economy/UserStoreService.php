@@ -18,6 +18,7 @@ use App\Exception\ResourceNotFoundException;
 use App\Service\GameShop\GameShopWearableFactory;
 use App\Service\Progression\DailyChallengeService;
 use App\Service\Progression\QuestProgressService;
+use App\Service\Progression\WeeklyContractService;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -30,6 +31,7 @@ class UserStoreService
         private QuestProgressService $questProgressService,
         private GameShopWearableFactory $gameShopWearableFactory,
         private DailyChallengeService $dailyChallengeService,
+        private WeeklyContractService $weeklyContractService,
     ) {
     }
 
@@ -156,6 +158,8 @@ class UserStoreService
 
             $this->questProgressService->checkAndUpdateProgress($lockedUser, QuestCategory::GOLD_SPENT, $price);
             $this->dailyChallengeService->recordGoldSpent($lockedUser, $price);
+            $this->weeklyContractService->recordGoldSpent($lockedUser, $price);
+            
             $rarity = $item->getRarity();
             if ($rarity !== null) {
                 $this->questProgressService->recordItemCollected($lockedUser, $rarity);

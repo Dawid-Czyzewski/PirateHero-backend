@@ -8,6 +8,7 @@ use App\Repository\ShopBoosterRepository;
 use App\Repository\UserShopBoosterSessionRepository;
 use App\Service\Economy\BoosterService;
 use App\Service\Progression\DailyChallengeService;
+use App\Service\Progression\WeeklyContractService;
 use App\Service\ShopBoosters\ShopBoosterEffectParser;
 use App\Service\ShopBoosters\ShopBoosterSessionService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -24,6 +25,7 @@ final class ShopBoosterSessionServiceApplyCombatStatsTest extends TestCase
             $this->createMock(BoosterService::class),
             new ShopBoosterEffectParser(),
             $this->createMock(DailyChallengeService::class),
+            $this->createMock(WeeklyContractService::class),
         );
 
         $base = [

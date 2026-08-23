@@ -6,6 +6,7 @@ namespace App\Entity;
 
 use App\Enum\WearableItemRarity;
 use App\Enum\WearableItemType;
+use App\Domain\Constants\WearableUpgradeConstants;
 use App\Repository\WearableItemRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -45,6 +46,10 @@ class WearableItem
     #[ORM\Column]
     #[Groups(['user:read'])]
     private ?int $price = null;
+
+    #[ORM\Column(options: ['default' => 0])]
+    #[Groups(['user:read'])]
+    private int $upgradeLevel = 0;
 
     #[ORM\Column(length: 64, unique: true, nullable: true)]
     #[Groups(['user:read'])]
@@ -150,6 +155,35 @@ class WearableItem
         $this->price = $price;
 
         return $this;
+    }
+
+    public function getUpgradeLevel(): int
+    {
+        return $this->upgradeLevel;
+    }
+
+    public function setUpgradeLevel(int $upgradeLevel): static
+    {
+        $this->upgradeLevel = max(0, $upgradeLevel);
+
+        return $this;
+    }
+
+    #[Groups(['user:read'])]
+    public function getMaxUpgradeLevel(): int
+    {
+        return WearableUpgradeConstants::maxLevelFor($this->rarity);
+    }
+
+    #[Groups(['user:read'])]
+    public function getNextUpgradeCost(): ?int
+    {
+        $max = $this->getMaxUpgradeLevel();
+        if ($this->upgradeLevel >= $max) {
+            return null;
+        }
+
+        return WearableUpgradeConstants::goldCost($this->upgradeLevel, $this->rarity);
     }
 
     public function getPublicCode(): ?string

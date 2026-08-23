@@ -156,6 +156,36 @@ readonly class TitleService
     }
 
     /**
+     * Grant a MANUAL title if not already unlocked. Does not flush.
+     *
+     * @return bool true when a new unlock row was created
+     */
+    public function grantTitle(User $user, string $titleCode): bool
+    {
+        $title = $this->playerTitleRepository->findOneByCode($titleCode);
+        if ($title === null) {
+            return false;
+        }
+
+        if ($title->getUnlockType() !== TitleUnlockType::MANUAL) {
+            return false;
+        }
+
+        $existing = $this->userTitleRepository->findOneForUserAndTitle($user, $title);
+        if ($existing !== null) {
+            return false;
+        }
+
+        $userTitle = new UserTitle();
+        $userTitle->setUser($user);
+        $userTitle->setPlayerTitle($title);
+        $userTitle->setUnlockedAt(new \DateTimeImmutable());
+        $this->entityManager->persist($userTitle);
+
+        return true;
+    }
+
+    /**
      * @return array{code: string, nameKey: string}|null
      */
     public function buildEquippedTitleDto(?PlayerTitle $title): ?array
@@ -237,6 +267,10 @@ readonly class TitleService
                 $stats?->getLegendaryEquipmentFullReached() ?? 0,
                 self::EQUIPMENT_FULL_TARGET,
             ),
+            TitleUnlockType::MANUAL => [
+                'met' => false,
+                'progress' => null,
+            ],
         };
     }
 

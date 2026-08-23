@@ -8,6 +8,7 @@ use App\Entity\User;
 use App\Http\ApiEnvelope;
 use App\Service\Economy\UserEquipmentService;
 use App\Service\Economy\UserStoreService;
+use App\Service\Economy\WearableItemUpgradeService;
 use App\Service\GameShop\GameShopService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -23,6 +24,7 @@ final class GameShopController extends AbstractController
         private readonly GameShopService $gameShopService,
         private readonly UserStoreService $userStoreService,
         private readonly UserEquipmentService $userEquipmentService,
+        private readonly WearableItemUpgradeService $wearableItemUpgradeService,
     ) {
     }
 
@@ -113,5 +115,21 @@ final class GameShopController extends AbstractController
         }
 
         return ApiEnvelope::jsonResponse($payload, 'storeRefreshed');
+    }
+
+    #[Route('/upgrade', name: 'game_shop_upgrade', methods: ['POST'])]
+    public function upgrade(#[CurrentUser] User $user, Request $request): JsonResponse
+    {
+        $data = $this->gameShopService->decodeJsonBody($request->getContent());
+        $itemId = $this->gameShopService->requireBodyInt($data, 'itemId', 'itemIdRequired');
+
+        $result = $this->wearableItemUpgradeService->upgrade($user, $itemId);
+
+        $payload = $this->gameShopService->buildFreshState((string) $user->getId());
+        if ($payload === null) {
+            return ApiEnvelope::jsonResponse($result, 'itemUpgraded');
+        }
+
+        return ApiEnvelope::jsonResponse(array_merge($payload, ['upgrade' => $result]), 'itemUpgraded');
     }
 }
