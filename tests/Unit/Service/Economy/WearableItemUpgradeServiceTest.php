@@ -116,6 +116,51 @@ final class WearableItemUpgradeServiceTest extends TestCase
         self::assertSame(10 + $cost, $item->getPrice());
     }
 
+    public function testSpecializeRequiresMaxUpgrade(): void
+    {
+        $item = $this->makeItem(WearableItemRarity::COMMON, 2);
+        $this->setEntityId($item, 20);
+        $user = $this->makeUserWithChestItem($item);
+        $service = $this->makeService(em: $this->mockTransactionalEm($user, $item));
+
+        $this->expectException(BusinessRuleException::class);
+        $this->expectExceptionMessage('itemSpecializationRequiresMaxUpgrade');
+        $service->specialize($user, 20, 'health');
+    }
+
+    public function testSpecializeHealthSpendsGoldAndBumpsHp(): void
+    {
+        $item = $this->makeItem(WearableItemRarity::COMMON, 3);
+        $this->setEntityId($item, 21);
+        $user = $this->makeUserWithChestItem($item);
+        $goldBefore = $user->getGold();
+        $cost = WearableUpgradeConstants::specializationGoldCost(WearableItemRarity::COMMON);
+
+        $service = $this->makeService(
+            em: $this->mockTransactionalEm($user, $item, withFlush: true, expectCommit: true),
+        );
+
+        $result = $service->specialize($user, 21, 'health');
+
+        self::assertSame('health', $result['specialization']);
+        self::assertSame($cost, $result['goldSpent']);
+        self::assertSame($goldBefore - $cost, $result['gold']);
+        self::assertSame(3 + WearableUpgradeConstants::HEALTH_BONUS, $item->getStatistics()?->getHealthPoints());
+        self::assertSame('health', $item->getSpecialization());
+    }
+
+    public function testSpecializeInvalidType(): void
+    {
+        $item = $this->makeItem(WearableItemRarity::COMMON, 3);
+        $this->setEntityId($item, 22);
+        $user = $this->makeUserWithChestItem($item);
+        $service = $this->makeService();
+
+        $this->expectException(BusinessRuleException::class);
+        $this->expectExceptionMessage('invalidSpecialization');
+        $service->specialize($user, 22, 'nope');
+    }
+
     private function makeService(
         ?EntityManagerInterface $em = null,
         ?DailyChallengeService $daily = null,

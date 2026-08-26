@@ -8,4 +8,5 @@ final class TitleCodes
 {
     public const ROOKIE = 'rookie';
     public const WEEKLY_CORSAIR = 'weekly_corsair';
+    public const BESTIARY_ARCHIVIST = 'bestiary_archivist';
 }

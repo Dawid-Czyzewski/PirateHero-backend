@@ -51,6 +51,10 @@ class WearableItem
     #[Groups(['user:read'])]
     private int $upgradeLevel = 0;
 
+    #[ORM\Column(length: 32, nullable: true)]
+    #[Groups(['user:read'])]
+    private ?string $specialization = null;
+
     #[ORM\Column(length: 64, unique: true, nullable: true)]
     #[Groups(['user:read'])]
     private ?string $publicCode = null;
@@ -169,10 +173,38 @@ class WearableItem
         return $this;
     }
 
+    public function getSpecialization(): ?string
+    {
+        return $this->specialization;
+    }
+
+    public function setSpecialization(?string $specialization): static
+    {
+        $this->specialization = $specialization;
+
+        return $this;
+    }
+
     #[Groups(['user:read'])]
     public function getMaxUpgradeLevel(): int
     {
         return WearableUpgradeConstants::maxLevelFor($this->rarity);
+    }
+
+    #[Groups(['user:read'])]
+    public function getSpecializationCost(): ?int
+    {
+        if ($this->upgradeLevel < $this->getMaxUpgradeLevel() || $this->specialization !== null) {
+            return null;
+        }
+
+        return WearableUpgradeConstants::specializationGoldCost($this->rarity);
+    }
+
+    #[Groups(['user:read'])]
+    public function getCanSpecialize(): bool
+    {
+        return $this->upgradeLevel >= $this->getMaxUpgradeLevel() && $this->specialization === null;
     }
 
     #[Groups(['user:read'])]

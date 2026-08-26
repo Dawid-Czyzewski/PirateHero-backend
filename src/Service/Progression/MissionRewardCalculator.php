@@ -8,6 +8,7 @@ use App\Entity\Mission;
 use App\Entity\Ship;
 use App\Entity\User;
 use App\Service\Economy\ShipPercentRewardMath;
+use App\Service\Economy\WearableItemUpgradeService;
 use App\Service\ShopBoosters\ShopBoosterSessionService;
 
 final class MissionRewardCalculator
@@ -22,7 +23,8 @@ final class MissionRewardCalculator
      *   gold: int,
      *   exp: int,
      *   bonusPercent: int,
-     *   shopBoosterPercent: int
+     *   shopBoosterPercent: int,
+     *   specializationGoldPercent: int
      * }
      */
     public function calculate(User $user, Mission $mission, ?Ship $ship = null): array
@@ -39,11 +41,16 @@ final class MissionRewardCalculator
         $goldFromShop = (int) floor($goldAfterShip * $shopFrac);
         $expFromShop = (int) floor($expAfterShip * $shopFrac);
 
+        $goldBeforeSpec = $goldAfterShip + $goldFromShop;
+        $specPercent = WearableItemUpgradeService::equippedMissionGoldPercent($user);
+        $goldFromSpec = (int) floor($goldBeforeSpec * ($specPercent / 100));
+
         return [
-            'gold' => $goldAfterShip + $goldFromShop,
+            'gold' => $goldBeforeSpec + $goldFromSpec,
             'exp' => $expAfterShip + $expFromShop,
             'bonusPercent' => $bonusPercent,
             'shopBoosterPercent' => (int) round($shopFrac * 100),
+            'specializationGoldPercent' => $specPercent,
         ];
     }
 }

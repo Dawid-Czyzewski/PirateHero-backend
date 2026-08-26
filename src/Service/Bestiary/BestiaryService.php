@@ -15,6 +15,7 @@ readonly class BestiaryService
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly UserBestiaryEntryRepository $bestiaryEntryRepository,
+        private readonly BestiaryTrophyService $bestiaryTrophyService,
         private readonly bool $unlockAllForTesting = false,
     ) {
     }
@@ -75,5 +76,7 @@ readonly class BestiaryService
         $entry->setDefeatedAt(new \DateTimeImmutable());
 
         $this->entityManager->persist($entry);
+        $this->entityManager->flush();
+        $this->bestiaryTrophyService->sync($user);
     }
 }

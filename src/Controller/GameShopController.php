@@ -132,4 +132,21 @@ final class GameShopController extends AbstractController
 
         return ApiEnvelope::jsonResponse(array_merge($payload, ['upgrade' => $result]), 'itemUpgraded');
     }
+
+    #[Route('/specialize', name: 'game_shop_specialize', methods: ['POST'])]
+    public function specialize(#[CurrentUser] User $user, Request $request): JsonResponse
+    {
+        $data = $this->gameShopService->decodeJsonBody($request->getContent());
+        $itemId = $this->gameShopService->requireBodyInt($data, 'itemId', 'itemIdRequired');
+        $specialization = $this->gameShopService->requireBodyString($data, 'specialization', 'specializationRequired');
+
+        $result = $this->wearableItemUpgradeService->specialize($user, $itemId, $specialization);
+
+        $payload = $this->gameShopService->buildFreshState((string) $user->getId());
+        if ($payload === null) {
+            return ApiEnvelope::jsonResponse($result, 'itemSpecialized');
+        }
+
+        return ApiEnvelope::jsonResponse(array_merge($payload, ['specialize' => $result]), 'itemSpecialized');
+    }
 }

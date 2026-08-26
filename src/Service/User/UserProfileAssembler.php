@@ -196,6 +196,9 @@ final class UserProfileAssembler
                         'upgradeLevel' => $item->getUpgradeLevel(),
                         'maxUpgradeLevel' => $item->getMaxUpgradeLevel(),
                         'nextUpgradeCost' => $item->getNextUpgradeCost(),
+                        'specialization' => $item->getSpecialization(),
+                        'canSpecialize' => $item->getCanSpecialize(),
+                        'specializationCost' => $item->getSpecializationCost(),
                         'price' => $item->getPrice(),
                     ];
                 }

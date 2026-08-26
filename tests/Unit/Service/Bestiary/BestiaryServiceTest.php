@@ -9,6 +9,7 @@ use App\Entity\User;
 use App\Entity\UserBestiaryEntry;
 use App\Repository\UserBestiaryEntryRepository;
 use App\Service\Bestiary\BestiaryService;
+use App\Service\Bestiary\BestiaryTrophyService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 
@@ -27,6 +28,7 @@ final class BestiaryServiceTest extends TestCase
         $service = new BestiaryService(
             $this->createMock(EntityManagerInterface::class),
             $repo,
+            $this->createMock(BestiaryTrophyService::class),
         );
 
         $result = $service->getForUser($user);
@@ -47,8 +49,12 @@ final class BestiaryServiceTest extends TestCase
 
         $em = $this->createMock(EntityManagerInterface::class);
         $em->expects(self::once())->method('persist')->with(self::isInstanceOf(UserBestiaryEntry::class));
+        $em->expects(self::once())->method('flush');
 
-        $service = new BestiaryService($em, $repo);
+        $trophies = $this->createMock(BestiaryTrophyService::class);
+        $trophies->expects(self::once())->method('sync')->with($user);
+
+        $service = new BestiaryService($em, $repo, $trophies);
         $service->recordDefeat($user, 'krypta', 1);
     }
 
@@ -66,7 +72,10 @@ final class BestiaryServiceTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->expects(self::never())->method('persist');
 
-        $service = new BestiaryService($em, $repo);
+        $trophies = $this->createMock(BestiaryTrophyService::class);
+        $trophies->expects(self::never())->method('sync');
+
+        $service = new BestiaryService($em, $repo, $trophies);
         $service->recordDefeat($user, 'krypta', 1);
     }
 

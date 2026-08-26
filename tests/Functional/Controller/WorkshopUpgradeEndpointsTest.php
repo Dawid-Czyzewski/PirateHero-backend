@@ -75,6 +75,42 @@ final class WorkshopUpgradeEndpointsTest extends ApiWebTestCase
         self::assertSame('wearableItemNotFound', $problem['detail']);
     }
 
+    public function testSpecializeAtMaxLevelSetsHealth(): void
+    {
+        $user = $this->makeUserWithChestItem();
+        $item = $this->persistWearableInChest($user);
+        $item->setUpgradeLevel(3);
+        $this->entityManager()->flush();
+        $cost = WearableUpgradeConstants::specializationGoldCost(WearableItemRarity::COMMON);
+        $goldBefore = $user->getGold();
+        $hpBefore = $item->getStatistics()?->getHealthPoints() ?? 0;
+
+        $client = $this->createAuthenticatedClient($user);
+        $client->request(
+            'POST',
+            '/api/game-shop/specialize',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode(['itemId' => $item->getId(), 'specialization' => 'health'], JSON_THROW_ON_ERROR),
+        );
+
+        self::assertResponseIsSuccessful();
+        $decoded = $this->assertJsonEnvelopeSuccess($client->getResponse());
+        self::assertSame('itemSpecialized', $decoded['meta']['message'] ?? null);
+        $spec = $decoded['data']['specialize'] ?? null;
+        self::assertIsArray($spec);
+        self::assertSame('health', $spec['specialization'] ?? null);
+        self::assertSame($cost, $spec['goldSpent'] ?? null);
+        self::assertSame($goldBefore - $cost, $spec['gold'] ?? null);
+
+        $this->entityManager()->clear();
+        $reloaded = $this->entityManager()->find(WearableItem::class, $item->getId());
+        self::assertNotNull($reloaded);
+        self::assertSame('health', $reloaded->getSpecialization());
+        self::assertSame($hpBefore + WearableUpgradeConstants::HEALTH_BONUS, $reloaded->getStatistics()?->getHealthPoints());
+    }
+
     private function makeUserWithChestItem(): User
     {
         $user = $this->makePersistedActivatedUser();

@@ -10,6 +10,7 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\Post;
 use App\Controller\BestiaryController;
+use App\Controller\BestiaryTrophyController;
 use App\Controller\BoosterController;
 use App\Controller\DailyChallengeController;
 use App\Controller\DailyRewardController;
@@ -98,6 +99,18 @@ use App\Entity\User;
         new Get(
             uriTemplate: '/users/bestiary/entries',
             controller: BestiaryController::class.'::getBestiary',
+            security: "is_granted('IS_AUTHENTICATED_FULLY')",
+            read: false,
+        ),
+        new Get(
+            uriTemplate: '/users/bestiary/trophies',
+            controller: BestiaryTrophyController::class.'::getStatus',
+            security: "is_granted('IS_AUTHENTICATED_FULLY')",
+            read: false,
+        ),
+        new Post(
+            uriTemplate: '/users/bestiary/trophies/{code}/claim',
+            controller: BestiaryTrophyController::class.'::claim',
             security: "is_granted('IS_AUTHENTICATED_FULLY')",
             read: false,
         ),

@@ -38,6 +38,7 @@ final class MissionRewardCalculatorTest extends TestCase
         self::assertSame(242, $result['exp']);
         self::assertSame(10, $result['bonusPercent']);
         self::assertSame(10, $result['shopBoosterPercent']);
+        self::assertSame(0, $result['specializationGoldPercent']);
     }
 
     public function testMinimumBumpWhenShipRoundingWouldLeaveFlat(): void

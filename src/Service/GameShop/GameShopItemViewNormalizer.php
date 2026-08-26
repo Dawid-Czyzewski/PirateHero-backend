@@ -52,6 +52,9 @@ final class GameShopItemViewNormalizer
             'upgradeLevel' => $item->getUpgradeLevel(),
             'maxUpgradeLevel' => WearableUpgradeConstants::maxLevelFor($item->getRarity()),
             'nextUpgradeCost' => $item->getNextUpgradeCost(),
+            'specialization' => $item->getSpecialization(),
+            'canSpecialize' => $item->getCanSpecialize(),
+            'specializationCost' => $item->getSpecializationCost(),
         ];
     }
 

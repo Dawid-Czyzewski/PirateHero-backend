@@ -33,6 +33,9 @@ final class PlayerTitleCatalog
             self::row('veteran_captain', TitleUnlockType::LEVEL_REACHED, 35, null, 17),
             self::row('undead_slayer', TitleUnlockType::DUNGEON_COMPLETED, null, 'krypta', 18),
             self::row('beast_hunter', TitleUnlockType::BESTIARY_COMPLETE, 50, null, 19),
+            self::row('bestiary_scout', TitleUnlockType::BESTIARY_COMPLETE, 13, null, 201),
+            self::row('bestiary_tracker', TitleUnlockType::BESTIARY_COMPLETE, 25, null, 202),
+            self::row('bestiary_naturalist', TitleUnlockType::BESTIARY_COMPLETE, 38, null, 203),
             self::row('black_corsair', TitleUnlockType::FIGHTS_WON, 250, null, 20),
             self::row('elite_captain', TitleUnlockType::LEVEL_REACHED, 50, null, 21),
             self::row('fortress_lord', TitleUnlockType::DUNGEON_COMPLETED, null, 'forteca', 22),
@@ -69,6 +72,7 @@ final class PlayerTitleCatalog
             self::row('greatest_explorer', TitleUnlockType::ITEMS_COLLECTED, 350, null, 53),
             self::row('eternal_captain', TitleUnlockType::LEVEL_REACHED, 300, null, 54),
             self::row('weekly_corsair', TitleUnlockType::MANUAL, null, null, 200),
+            self::row('bestiary_archivist', TitleUnlockType::MANUAL, null, null, 204),
         ];
 
         foreach (LevelRankTitleCatalog::definitions() as $def) {

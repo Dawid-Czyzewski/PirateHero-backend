@@ -34,4 +34,16 @@ final class WearableUpgradeConstants
 
         return max(1, (int) round(self::GOLD_BASE * ($currentUpgradeLevel + 1) * $modifier));
     }
+
+    public const HEALTH_BONUS = 5;
+    public const CRIT_BONUS = 3;
+    public const MISSION_GOLD_PERCENT = 5;
+    public const MISSION_GOLD_PERCENT_CAP = 15;
+
+    public static function specializationGoldCost(?WearableItemRarity $rarity): int
+    {
+        $max = self::maxLevelFor($rarity);
+
+        return 2 * self::goldCost(max(0, $max - 1), $rarity);
+    }
 }
