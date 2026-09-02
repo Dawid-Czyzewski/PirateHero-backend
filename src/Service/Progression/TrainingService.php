@@ -62,7 +62,9 @@ class TrainingService
 
             $training->setDurationInSeconds(ProgressionConstants::TRAINING_DURATION_SECONDS);
             $training->setTrainingPointsCost(ProgressionConstants::TRAINING_COST);
-            $training->setSkillPointsReward(ProgressionConstants::TRAINING_SKILL_POINTS_REWARD);
+            $training->setSkillPointsReward(
+                ProgressionConstants::trainingSkillPointsRewardForLevel(UserLevelResolver::of($user))
+            );
             $training->setStatType($statType);
             $training->setUser($user);
 

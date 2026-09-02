@@ -91,6 +91,29 @@ final class TrainingServiceTest extends TestCase
         }
     }
 
+    public function testGenerateTrainingsForUserScalesRewardWithLevel(): void
+    {
+        $persisted = [];
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('persist')->willReturnCallback(static function ($entity) use (&$persisted): void {
+            if ($entity instanceof Training) {
+                $persisted[] = $entity;
+            }
+        });
+        $em->method('flush');
+
+        $user = $this->makeUser();
+        $user->setLevel((new Level())->setName('5')->setExpToNextLevel(500));
+
+        $service = $this->makeService($em);
+        $service->generateTrainingsForUser($user);
+
+        self::assertCount(5, $persisted);
+        foreach ($persisted as $training) {
+            self::assertSame(3, $training->getSkillPointsReward());
+        }
+    }
+
     public function testCancelTrainingRefundsCostAndClearsActivity(): void
     {
         $user = $this->makeUser();

@@ -17,5 +17,14 @@ final class ProgressionConstants
 
     public const TRAINING_SKILL_POINTS_REWARD = 2;
 
+    public const TRAINING_SKILL_REWARD_LEVEL_STEP = 4;
+
     public const TRAINING_COST = 2;
+
+    public static function trainingSkillPointsRewardForLevel(int $level): int
+    {
+        $level = max(1, $level);
+
+        return self::TRAINING_SKILL_POINTS_REWARD + intdiv($level - 1, self::TRAINING_SKILL_REWARD_LEVEL_STEP);
+    }
 }

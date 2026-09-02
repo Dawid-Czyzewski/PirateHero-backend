@@ -190,7 +190,20 @@ final class GameShopOfferRollerTest extends TestCase
 
         self::assertNotEmpty($statValues);
         self::assertGreaterThanOrEqual(4, min($statValues));
-        self::assertLessThanOrEqual(35, max($statValues));
+        self::assertLessThanOrEqual(75, max($statValues));
+    }
+
+    public function testLevelFiveTypicalStatSumGreaterThanLevelOne(): void
+    {
+        $roller = $this->createRoller();
+        $sumLow = 0;
+        $sumHigh = 0;
+        for ($i = 0; $i < 80; ++$i) {
+            $sumLow += $this->sumStatValues($roller->roll(WearableItemType::Weapon, 1)['shopStats']);
+            $sumHigh += $this->sumStatValues($roller->roll(WearableItemType::Weapon, 5)['shopStats']);
+        }
+
+        self::assertGreaterThan($sumLow, $sumHigh);
     }
 
     private function averageStatSumForRarityAtLevel(
@@ -201,7 +214,7 @@ final class GameShopOfferRollerTest extends TestCase
     ): float {
         $sum = 0.0;
         $count = 0;
-        for ($i = 0; $i < 80; ++$i) {
+        for ($i = 0; $i < 400; ++$i) {
             $row = $roller->roll($type, $level);
             if ($row['rarity'] !== $rarity) {
                 continue;

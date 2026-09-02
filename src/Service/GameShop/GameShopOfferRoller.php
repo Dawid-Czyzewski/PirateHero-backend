@@ -7,11 +7,11 @@ namespace App\Service\GameShop;
 use App\Domain\WearableRarityWeightedPicker;
 use App\Enum\WearableItemRarity;
 use App\Enum\WearableItemType;
-use App\Service\Progression\PlayerLevelScale;
 
 final class GameShopOfferRoller
 {
     private const LEVEL_CLAMP_MAX = 100;
+    private const SHOP_LEVEL_SCALE_K = 0.15;
     private const STAT_JITTER_MIN = 92;
     private const STAT_JITTER_MAX = 108;
     private const PRICE_JITTER_MIN = 95;
@@ -75,7 +75,7 @@ final class GameShopOfferRoller
         );
         $level = max(1, min(self::LEVEL_CLAMP_MAX, $playerLevel));
 
-        $statFactor = PlayerLevelScale::factor($level);
+        $statFactor = self::shopLevelFactor($level);
         $statJitter = random_int(self::STAT_JITTER_MIN, self::STAT_JITTER_MAX) / 100.0;
 
         $scaledStats = $this->rollRandomStatLines($base['rarity'], $statFactor, $statJitter);
@@ -90,9 +90,14 @@ final class GameShopOfferRoller
         ];
     }
 
+    private static function shopLevelFactor(int $level): float
+    {
+        return 1.0 + ($level - 1) * self::SHOP_LEVEL_SCALE_K;
+    }
+
     private function rollPrice(WearableItemRarity $rarity, int $level): int
     {
-        $priceFactor = PlayerLevelScale::factor($level);
+        $priceFactor = self::shopLevelFactor($level);
         $priceJitter = random_int(self::PRICE_JITTER_MIN, self::PRICE_JITTER_MAX) / 100.0;
         [$min, $max] = self::PRICE_RANGES[$rarity->value];
         $base = random_int($min, $max);
