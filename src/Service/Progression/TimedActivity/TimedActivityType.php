@@ -9,4 +9,5 @@ enum TimedActivityType: string
     case Mission = 'mission';
     case Work = 'work';
     case Training = 'training';
+    case Voyage = 'voyage';
 }

@@ -35,6 +35,11 @@ class UserActualActivity
     #[Groups(['user:read'])]
     private ?Training $training = null;
 
+    #[ORM\ManyToOne(targetEntity: ShipVoyage::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    #[Groups(['user:read'])]
+    private ?ShipVoyage $shipVoyage = null;
+
     #[ORM\Column(type: 'datetime')]
     #[Groups(['user:read'])]
     private ?\DateTimeInterface $startTime = null;
@@ -88,6 +93,18 @@ class UserActualActivity
     public function setTraining(?Training $training): self
     {
         $this->training = $training;
+
+        return $this;
+    }
+
+    public function getShipVoyage(): ?ShipVoyage
+    {
+        return $this->shipVoyage;
+    }
+
+    public function setShipVoyage(?ShipVoyage $shipVoyage): self
+    {
+        $this->shipVoyage = $shipVoyage;
 
         return $this;
     }

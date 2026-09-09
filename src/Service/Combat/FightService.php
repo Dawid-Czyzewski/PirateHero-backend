@@ -18,6 +18,7 @@ use App\Mapper\Api\FightMapper;
 use App\Service\Progression\DailyChallengeService;
 use App\Service\Progression\QuestProgressService;
 use App\Service\Progression\QuestService;
+use App\Service\Progression\WeeklyArenaFameService;
 use App\Service\Progression\WeeklyContractService;
 use App\Service\ShopBoosters\CombatStatisticsProvider;
 use App\Service\User\SimilarUsersResolver;
@@ -35,6 +36,7 @@ readonly class FightService
         private readonly CombatStatisticsProvider $combatStatisticsProvider,
         private readonly DailyChallengeService $dailyChallengeService,
         private readonly WeeklyContractService $weeklyContractService,
+        private readonly WeeklyArenaFameService $weeklyArenaFameService,
     ) {
     }
 
@@ -137,11 +139,13 @@ readonly class FightService
                 $this->questProgressService->checkAndUpdateProgress($defender, QuestCategory::FIGHTS_LOST, 1);
                 $this->dailyChallengeService->recordArenaWins($attacker, 1);
                 $this->weeklyContractService->recordArenaWins($attacker, 1);
+                $this->weeklyArenaFameService->recordFameGained($attacker, FightConstants::PVP_WIN_FAME);
             } else {
                 $this->questProgressService->checkAndUpdateProgress($defender, QuestCategory::FIGHTS_WON, 1);
                 $this->questProgressService->checkAndUpdateProgress($attacker, QuestCategory::FIGHTS_LOST, 1);
                 $this->dailyChallengeService->recordArenaWins($defender, 1);
                 $this->weeklyContractService->recordArenaWins($defender, 1);
+                $this->weeklyArenaFameService->recordFameGained($defender, FightConstants::PVP_WIN_FAME);
             }
 
             $opponentsNext = $this->getAvailableOpponents($attacker);

@@ -15,6 +15,7 @@ use App\Repository\ShipMemberRepository;
 use App\Repository\ShipMessageRepository;
 use App\Repository\UserRepository;
 use App\Service\Progression\DailyChallengeService;
+use App\Service\Progression\TimedActivity\TimedActivityLifecycle;
 use App\Service\Progression\WeeklyContractService;
 use App\Service\Ship\ShipChatService;
 use App\Service\Ship\ShipMembershipService;
@@ -53,6 +54,7 @@ final class ShipMembershipServiceTest extends TestCase
             $this->createMock(ShipChatService::class),
             $this->createMock(DailyChallengeService::class),
             $this->createMock(WeeklyContractService::class),
+            new TimedActivityLifecycle($em),
         );
 
         $this->expectException(BusinessRuleException::class);
@@ -89,6 +91,7 @@ final class ShipMembershipServiceTest extends TestCase
             $this->createMock(ShipChatService::class),
             $this->createMock(DailyChallengeService::class),
             $this->createMock(WeeklyContractService::class),
+            new TimedActivityLifecycle($em),
         );
 
         $this->expectException(BusinessRuleException::class);
@@ -100,15 +103,17 @@ final class ShipMembershipServiceTest extends TestCase
     {
         $ship = $this->createMock(Ship::class);
         $ship->method('getRequiresInvitation')->willReturn(true);
+        $em = $this->createMock(EntityManagerInterface::class);
 
         $service = new ShipMembershipService(
-            $this->createMock(EntityManagerInterface::class),
+            $em,
             $this->createMock(ShipMemberRepository::class),
             $this->createMock(ShipMessageRepository::class),
             $this->createMock(UserRepository::class),
             $this->createMock(ShipChatService::class),
             $this->createMock(DailyChallengeService::class),
             $this->createMock(WeeklyContractService::class),
+            new TimedActivityLifecycle($em),
         );
 
         $this->expectException(BusinessRuleException::class);
@@ -123,15 +128,17 @@ final class ShipMembershipServiceTest extends TestCase
 
         $shipMemberRepository = $this->createMock(ShipMemberRepository::class);
         $shipMemberRepository->method('findOneBy')->willReturn($member);
+        $em = $this->createMock(EntityManagerInterface::class);
 
         $service = new ShipMembershipService(
-            $this->createMock(EntityManagerInterface::class),
+            $em,
             $shipMemberRepository,
             $this->createMock(ShipMessageRepository::class),
             $this->createMock(UserRepository::class),
             $this->createMock(ShipChatService::class),
             $this->createMock(DailyChallengeService::class),
             $this->createMock(WeeklyContractService::class),
+            new TimedActivityLifecycle($em),
         );
 
         self::assertSame($ship, $service->getShipForUser($this->makeUser()));
@@ -141,15 +148,17 @@ final class ShipMembershipServiceTest extends TestCase
     {
         $shipMemberRepository = $this->createMock(ShipMemberRepository::class);
         $shipMemberRepository->method('findOneBy')->willReturn(null);
+        $em = $this->createMock(EntityManagerInterface::class);
 
         $service = new ShipMembershipService(
-            $this->createMock(EntityManagerInterface::class),
+            $em,
             $shipMemberRepository,
             $this->createMock(ShipMessageRepository::class),
             $this->createMock(UserRepository::class),
             $this->createMock(ShipChatService::class),
             $this->createMock(DailyChallengeService::class),
             $this->createMock(WeeklyContractService::class),
+            new TimedActivityLifecycle($em),
         );
 
         self::assertFalse($service->isUserOwner($this->makeUser(), new Ship()));
@@ -173,6 +182,7 @@ final class ShipMembershipServiceTest extends TestCase
             $chat,
             $this->createMock(DailyChallengeService::class),
             $this->createMock(WeeklyContractService::class),
+            new TimedActivityLifecycle($em),
         );
 
         $ship = (new Ship())->setTitle('old');

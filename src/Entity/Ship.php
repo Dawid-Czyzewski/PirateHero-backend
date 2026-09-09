@@ -14,6 +14,7 @@ use App\Controller\Ship\ShipEnrollmentController;
 use App\Controller\Ship\ShipNotificationsController;
 use App\Controller\Ship\ShipOverviewController;
 use App\Controller\Ship\ShipRosterController;
+use App\Controller\Ship\ShipVoyageController;
 use App\Controller\ShipsFightController;
 use App\Repository\ShipRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -224,6 +225,29 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
             uriTemplate: '/ships/fights/{fightId}',
             controller: ShipsFightController::class.'::getFightDetails',
             security: "is_granted('IS_AUTHENTICATED_FULLY')",
+        ),
+        new Get(
+            uriTemplate: '/ships/voyages/status',
+            controller: ShipVoyageController::class.'::getStatus',
+            security: "is_granted('IS_AUTHENTICATED_FULLY')",
+        ),
+        new Post(
+            uriTemplate: '/ships/voyages/start',
+            controller: ShipVoyageController::class.'::start',
+            security: "is_granted('IS_AUTHENTICATED_FULLY')",
+            read: false,
+        ),
+        new Post(
+            uriTemplate: '/ships/voyages/complete',
+            controller: ShipVoyageController::class.'::complete',
+            security: "is_granted('IS_AUTHENTICATED_FULLY')",
+            read: false,
+        ),
+        new Post(
+            uriTemplate: '/ships/voyages/cancel',
+            controller: ShipVoyageController::class.'::cancel',
+            security: "is_granted('IS_AUTHENTICATED_FULLY')",
+            read: false,
         ),
     ]
 )]

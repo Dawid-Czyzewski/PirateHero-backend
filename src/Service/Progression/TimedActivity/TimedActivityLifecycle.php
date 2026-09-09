@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service\Progression\TimedActivity;
 
 use App\Entity\Mission;
+use App\Entity\ShipVoyage;
 use App\Entity\Training;
 use App\Entity\User;
 use App\Entity\UserActualActivity;
@@ -39,6 +40,11 @@ final class TimedActivityLifecycle
     public function startTraining(User $user, Training $training): UserActualActivity
     {
         return $this->start($user, TimedActivityType::Training, $training);
+    }
+
+    public function startVoyage(User $user, ShipVoyage $voyage): UserActualActivity
+    {
+        return $this->start($user, TimedActivityType::Voyage, $voyage);
     }
 
     public function clear(User $user, UserActualActivity $activity): void
@@ -105,6 +111,20 @@ final class TimedActivityLifecycle
         return [$activity, $training];
     }
 
+    /**
+     * @return array{0: UserActualActivity, 1: ShipVoyage}
+     */
+    public function requireActiveVoyage(User $user): array
+    {
+        $activity = $this->requireActivity($user);
+        $voyage = $activity->getShipVoyage();
+        if ($voyage === null) {
+            throw new BusinessRuleException('noVoyageForActivity');
+        }
+
+        return [$activity, $voyage];
+    }
+
     private function requireActivity(User $user): UserActualActivity
     {
         $activity = $user->getCurrentActivity();
@@ -115,7 +135,7 @@ final class TimedActivityLifecycle
         return $activity;
     }
 
-    private function start(User $user, TimedActivityType $type, Mission|Work|Training $subject): UserActualActivity
+    private function start(User $user, TimedActivityType $type, Mission|Work|Training|ShipVoyage $subject): UserActualActivity
     {
         $this->assertNoActivityInProgress($user);
 
@@ -127,6 +147,7 @@ final class TimedActivityLifecycle
             TimedActivityType::Mission => $activity->setMission($subject instanceof Mission ? $subject : null),
             TimedActivityType::Work => $activity->setWork($subject instanceof Work ? $subject : null),
             TimedActivityType::Training => $activity->setTraining($subject instanceof Training ? $subject : null),
+            TimedActivityType::Voyage => $activity->setShipVoyage($subject instanceof ShipVoyage ? $subject : null),
         };
 
         $user->setCurrentActivity($activity);

@@ -18,6 +18,7 @@ use App\Repository\ShipMemberRepository;
 use App\Repository\ShipMessageRepository;
 use App\Repository\UserRepository;
 use App\Service\Progression\DailyChallengeService;
+use App\Service\Progression\TimedActivity\TimedActivityLifecycle;
 use App\Service\Progression\WeeklyContractService;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
@@ -32,6 +33,7 @@ class ShipMembershipService
         private ShipChatService $shipChatService,
         private DailyChallengeService $dailyChallengeService,
         private WeeklyContractService $weeklyContractService,
+        private TimedActivityLifecycle $timedActivityLifecycle,
     ) {
     }
 
@@ -230,6 +232,7 @@ class ShipMembershipService
         $notification->setRemover($remover);
 
         $this->entityManager->persist($notification);
+        $this->clearVoyageActivityIfAny($userToRemove);
         $this->entityManager->remove($memberToRemove);
         $this->entityManager->flush();
 
@@ -255,11 +258,21 @@ class ShipMembershipService
             }
             $this->entityManager->remove($ship);
         } else {
+            $this->clearVoyageActivityIfAny($user);
             $this->entityManager->remove($member);
             $this->shipChatService->addSystemMessage($ship, 'shipPage.chatSystem.memberLeft', ['name' => $username ?? '']);
         }
 
         $this->entityManager->flush();
+    }
+
+    private function clearVoyageActivityIfAny(User $user): void
+    {
+        $activity = $user->getCurrentActivity();
+        if ($activity !== null && $activity->getShipVoyage() !== null) {
+            $this->timedActivityLifecycle->clear($user, $activity);
+            $this->entityManager->persist($user);
+        }
     }
 
     public function transferOwnership(Ship $ship, User $currentOwner, User $newOwner): void

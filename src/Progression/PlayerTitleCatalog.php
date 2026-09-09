@@ -72,6 +72,9 @@ final class PlayerTitleCatalog
             self::row('greatest_explorer', TitleUnlockType::ITEMS_COLLECTED, 350, null, 53),
             self::row('eternal_captain', TitleUnlockType::LEVEL_REACHED, 300, null, 54),
             self::row('weekly_corsair', TitleUnlockType::MANUAL, null, null, 200),
+            self::row('weekly_arena_fighter', TitleUnlockType::MANUAL, null, null, 201),
+            self::row('weekly_arena_champion', TitleUnlockType::MANUAL, null, null, 202),
+            self::row('weekly_arena_legend', TitleUnlockType::MANUAL, null, null, 203),
             self::row('bestiary_archivist', TitleUnlockType::MANUAL, null, null, 204),
         ];
 

@@ -22,6 +22,7 @@ use App\Controller\UserActivateAccountController;
 use App\Controller\UserController;
 use App\Controller\UserRegisterController;
 use App\Controller\UserSkillPointsController;
+use App\Controller\WeeklyArenaFameController;
 use App\Controller\WeeklyContractController;
 use App\Dto\UserRegisterDto;
 use App\Entity\User;
@@ -174,6 +175,18 @@ use App\Entity\User;
         new Post(
             uriTemplate: '/users/weekly-contracts/claim',
             controller: WeeklyContractController::class.'::claim',
+            security: "is_granted('IS_AUTHENTICATED_FULLY')",
+            read: false,
+        ),
+        new Get(
+            uriTemplate: '/users/weekly-arena-fame/status',
+            controller: WeeklyArenaFameController::class.'::getStatus',
+            security: "is_granted('IS_AUTHENTICATED_FULLY')",
+            read: false,
+        ),
+        new Post(
+            uriTemplate: '/users/weekly-arena-fame/claim',
+            controller: WeeklyArenaFameController::class.'::claim',
             security: "is_granted('IS_AUTHENTICATED_FULLY')",
             read: false,
         ),

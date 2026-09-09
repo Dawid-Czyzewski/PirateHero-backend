@@ -30,6 +30,10 @@ final class TimedActivityGuard
         if ($activity->getTraining() !== null) {
             throw new BusinessRuleException('finishTrainingFirst');
         }
+
+        if ($activity->getShipVoyage() !== null) {
+            throw new BusinessRuleException('finishVoyageFirst');
+        }
     }
 
     public function assertNoOtherMissionInProgress(User $user, Mission $mission): void
