@@ -16,6 +16,7 @@ use App\Repository\ShipMemberRepository;
 use App\Repository\ShipVoyageRepository;
 use App\Service\Economy\ShipPercentRewardMath;
 use App\Service\Progression\TimedActivity\TimedActivityLifecycle;
+use App\Service\Progression\TreasureMapProgressService;
 use App\Service\User\LevelService;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -28,6 +29,7 @@ class ShipVoyageService
         private readonly ShipMembershipService $shipMembershipService,
         private readonly TimedActivityLifecycle $timedActivityLifecycle,
         private readonly LevelService $levelService,
+        private readonly TreasureMapProgressService $treasureMapProgressService,
     ) {
     }
 
@@ -190,6 +192,7 @@ class ShipVoyageService
                 $this->timedActivityLifecycle->clear($sailor, $activity);
             }
             $this->entityManager->persist($sailor);
+            $this->treasureMapProgressService->recordShipVoyageComplete($sailor, 1);
             $payouts[] = [
                 'userId' => $sailor->getId(),
                 'username' => $sailor->getUsername(),

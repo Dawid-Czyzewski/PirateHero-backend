@@ -32,6 +32,7 @@ final class ShipVoyageServiceTest extends TestCase
             $this->createMock(ShipMembershipService::class),
             new TimedActivityLifecycle($em),
             $this->createMock(LevelService::class),
+            $this->createMock(\App\Service\Progression\TreasureMapProgressService::class),
         );
         $this->expectException(BusinessRuleException::class);
         $this->expectExceptionMessage('shipVoyageInvalidDuration');
@@ -64,6 +65,7 @@ final class ShipVoyageServiceTest extends TestCase
             $membership,
             new TimedActivityLifecycle($em),
             $this->createMock(LevelService::class),
+            $this->createMock(\App\Service\Progression\TreasureMapProgressService::class),
         );
 
         $status = $service->getStatus($user);

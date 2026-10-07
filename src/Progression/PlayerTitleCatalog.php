@@ -76,6 +76,8 @@ final class PlayerTitleCatalog
             self::row('weekly_arena_champion', TitleUnlockType::MANUAL, null, null, 202),
             self::row('weekly_arena_legend', TitleUnlockType::MANUAL, null, null, 203),
             self::row('bestiary_archivist', TitleUnlockType::MANUAL, null, null, 204),
+            self::row('weekend_arena_champion', TitleUnlockType::MANUAL, null, null, 205),
+            self::row('weekend_gladiator', TitleUnlockType::MANUAL, null, null, 206),
         ];
 
         foreach (LevelRankTitleCatalog::definitions() as $def) {

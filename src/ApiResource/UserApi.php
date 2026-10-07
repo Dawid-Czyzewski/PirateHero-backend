@@ -22,6 +22,8 @@ use App\Controller\UserActivateAccountController;
 use App\Controller\UserController;
 use App\Controller\UserRegisterController;
 use App\Controller\UserSkillPointsController;
+use App\Controller\TreasureMapController;
+use App\Controller\WeekendTournamentController;
 use App\Controller\WeeklyArenaFameController;
 use App\Controller\WeeklyContractController;
 use App\Dto\UserRegisterDto;
@@ -187,6 +189,36 @@ use App\Entity\User;
         new Post(
             uriTemplate: '/users/weekly-arena-fame/claim',
             controller: WeeklyArenaFameController::class.'::claim',
+            security: "is_granted('IS_AUTHENTICATED_FULLY')",
+            read: false,
+        ),
+        new Get(
+            uriTemplate: '/users/weekend-tournament/status',
+            controller: WeekendTournamentController::class.'::getStatus',
+            security: "is_granted('IS_AUTHENTICATED_FULLY')",
+            read: false,
+        ),
+        new Post(
+            uriTemplate: '/users/weekend-tournament/claim',
+            controller: WeekendTournamentController::class.'::claim',
+            security: "is_granted('IS_AUTHENTICATED_FULLY')",
+            read: false,
+        ),
+        new Get(
+            uriTemplate: '/users/weekend-tournament/leaderboard',
+            controller: WeekendTournamentController::class.'::getLeaderboard',
+            security: "is_granted('IS_AUTHENTICATED_FULLY')",
+            read: false,
+        ),
+        new Get(
+            uriTemplate: '/users/treasure-map/status',
+            controller: TreasureMapController::class.'::getStatus',
+            security: "is_granted('IS_AUTHENTICATED_FULLY')",
+            read: false,
+        ),
+        new Post(
+            uriTemplate: '/users/treasure-map/claim',
+            controller: TreasureMapController::class.'::claim',
             security: "is_granted('IS_AUTHENTICATED_FULLY')",
             read: false,
         ),

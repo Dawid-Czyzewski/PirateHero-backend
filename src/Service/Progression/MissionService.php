@@ -33,6 +33,7 @@ readonly class MissionService
         private readonly OwnedTimedActivityResolver $ownedTimedActivityResolver,
         private readonly DailyChallengeService $dailyChallengeService,
         private readonly WeeklyContractService $weeklyContractService,
+        private readonly TreasureMapProgressService $treasureMapProgressService,
     ) {
     }
 
@@ -170,6 +171,7 @@ readonly class MissionService
 
         $this->dailyChallengeService->recordMissions($lockedUser, 1);
         $this->weeklyContractService->recordMissions($lockedUser, 1);
+        $this->treasureMapProgressService->recordMissions($lockedUser, 1);
         $this->regenerateMissionsForUser($lockedUser);
 
         return [

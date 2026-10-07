@@ -45,6 +45,7 @@ final class DailyChallengeServiceTest extends TestCase
             $challengeRepo,
             $dayRepo,
             $this->createMock(LevelService::class),
+            $this->createMock(\App\Service\Progression\TreasureMapProgressService::class),
         );
 
         $status = $service->getStatus($user);

@@ -9,6 +9,8 @@ use App\Repository\UserRepository;
 use App\Service\Combat\FightService;
 use App\Service\Combat\TurnBasedDuelResolver;
 use App\Service\Progression\DailyChallengeService;
+use App\Service\Progression\TreasureMapProgressService;
+use App\Service\Progression\WeekendTournamentService;
 use App\Service\Progression\WeeklyArenaFameService;
 use App\Service\Progression\WeeklyContractService;
 use App\Service\Progression\QuestProgressService;
@@ -43,6 +45,8 @@ final class FightServiceTest extends TestCase
             $this->createMock(DailyChallengeService::class),
             $this->createMock(WeeklyContractService::class),
             $this->createMock(WeeklyArenaFameService::class),
+            $this->createMock(WeekendTournamentService::class),
+            $this->createMock(TreasureMapProgressService::class),
         );
 
         $out = $service->getAvailableOpponents(UserStubFactory::create(['prefix' => 'hero', 'levelName' => '2']));
@@ -80,6 +84,8 @@ final class FightServiceTest extends TestCase
             $this->createMock(DailyChallengeService::class),
             $this->createMock(WeeklyContractService::class),
             $this->createMock(WeeklyArenaFameService::class),
+            $this->createMock(WeekendTournamentService::class),
+            $this->createMock(TreasureMapProgressService::class),
         );
 
         $this->expectException(BusinessRuleException::class);

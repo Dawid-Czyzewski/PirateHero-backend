@@ -18,6 +18,8 @@ use App\Mapper\Api\FightMapper;
 use App\Service\Progression\DailyChallengeService;
 use App\Service\Progression\QuestProgressService;
 use App\Service\Progression\QuestService;
+use App\Service\Progression\TreasureMapProgressService;
+use App\Service\Progression\WeekendTournamentService;
 use App\Service\Progression\WeeklyArenaFameService;
 use App\Service\Progression\WeeklyContractService;
 use App\Service\ShopBoosters\CombatStatisticsProvider;
@@ -37,6 +39,8 @@ readonly class FightService
         private readonly DailyChallengeService $dailyChallengeService,
         private readonly WeeklyContractService $weeklyContractService,
         private readonly WeeklyArenaFameService $weeklyArenaFameService,
+        private readonly WeekendTournamentService $weekendTournamentService,
+        private readonly TreasureMapProgressService $treasureMapProgressService,
     ) {
     }
 
@@ -140,12 +144,16 @@ readonly class FightService
                 $this->dailyChallengeService->recordArenaWins($attacker, 1);
                 $this->weeklyContractService->recordArenaWins($attacker, 1);
                 $this->weeklyArenaFameService->recordFameGained($attacker, FightConstants::PVP_WIN_FAME);
+                $this->weekendTournamentService->recordWin($attacker, 1);
+                $this->treasureMapProgressService->recordArenaWins($attacker, 1);
             } else {
                 $this->questProgressService->checkAndUpdateProgress($defender, QuestCategory::FIGHTS_WON, 1);
                 $this->questProgressService->checkAndUpdateProgress($attacker, QuestCategory::FIGHTS_LOST, 1);
                 $this->dailyChallengeService->recordArenaWins($defender, 1);
                 $this->weeklyContractService->recordArenaWins($defender, 1);
                 $this->weeklyArenaFameService->recordFameGained($defender, FightConstants::PVP_WIN_FAME);
+                $this->weekendTournamentService->recordWin($defender, 1);
+                $this->treasureMapProgressService->recordArenaWins($defender, 1);
             }
 
             $opponentsNext = $this->getAvailableOpponents($attacker);

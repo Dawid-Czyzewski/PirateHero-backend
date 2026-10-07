@@ -22,6 +22,7 @@ use App\Service\Bestiary\BestiaryService;
 use App\Service\Progression\QuestProgressService;
 use App\Service\Progression\TimedActivityGuard;
 use App\Service\Progression\TitleService;
+use App\Service\Progression\TreasureMapProgressService;
 use App\Service\ShopBoosters\ShopBoosterSessionService;
 use App\Service\User\LevelService;
 use Doctrine\DBAL\LockMode;
@@ -42,6 +43,7 @@ class DungeonService
         private readonly BestiaryService $bestiaryService,
         private readonly TitleService $titleService,
         private readonly QuestProgressService $questProgressService,
+        private readonly TreasureMapProgressService $treasureMapProgressService,
     ) {
     }
 
@@ -256,6 +258,7 @@ class DungeonService
             }
 
             $this->bestiaryService->recordDefeat($lockedUser, $dungeonId->value, $stage);
+            $this->treasureMapProgressService->recordDungeonStageWin($lockedUser, 1);
 
             if ($userMutated) {
                 $this->levelService->checkAndUpdateLevel($lockedUser);

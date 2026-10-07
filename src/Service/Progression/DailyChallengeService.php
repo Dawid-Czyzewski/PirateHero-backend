@@ -23,6 +23,7 @@ class DailyChallengeService
         private readonly UserDailyChallengeRepository $challengeRepository,
         private readonly UserDailyChallengeDayRepository $dayRepository,
         private readonly LevelService $levelService,
+        private readonly TreasureMapProgressService $treasureMapProgressService,
     ) {
     }
 
@@ -169,6 +170,7 @@ class DailyChallengeService
             return;
         }
         $this->incrementType($user, DailyChallengeType::GoldSpent, $amount);
+        $this->treasureMapProgressService->recordGoldSpent($user, $amount);
     }
 
     private function incrementType(User $user, DailyChallengeType $type, int $amount): void

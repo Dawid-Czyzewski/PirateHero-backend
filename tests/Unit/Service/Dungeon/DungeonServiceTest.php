@@ -358,6 +358,7 @@ final class DungeonServiceTest extends TestCase
             $this->createMock(BestiaryService::class),
             $this->createMock(TitleService::class),
             $this->createMock(QuestProgressService::class),
+            $this->createMock(\App\Service\Progression\TreasureMapProgressService::class),
         );
     }
 }
