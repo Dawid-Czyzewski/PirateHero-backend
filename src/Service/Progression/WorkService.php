@@ -10,6 +10,7 @@ use App\Entity\User;
 use App\Entity\Work;
 use App\Exception\OperationForbiddenException;
 use App\Mapper\Api\WorkMapper;
+use App\Service\Economy\ShipPercentRewardMath;
 use App\Service\Progression\TimedActivity\OwnedTimedActivityResolver;
 use App\Service\Progression\TimedActivity\TimedActivityLifecycle;
 use App\Service\Ship\ShipMembershipService;
@@ -57,6 +58,7 @@ readonly class WorkService
         private readonly UserWriteLockExecutor $userWriteLockExecutor,
         private readonly TimedActivityLifecycle $timedActivityLifecycle,
         private readonly OwnedTimedActivityResolver $ownedTimedActivityResolver,
+        private readonly CompanionService $companionService,
     ) {
     }
 
@@ -119,6 +121,10 @@ readonly class WorkService
                 $this->shipMembershipService->getShipForUser($lockedUser),
             );
             $goldEarned = $rewards['totalGold'];
+            $companionBonusPercent = $this->companionService->workGoldBonusPercentForUser($lockedUser);
+            if ($companionBonusPercent > 0) {
+                $goldEarned = ShipPercentRewardMath::apply($goldEarned, $companionBonusPercent);
+            }
             $lockedUser->addGold($goldEarned);
 
             $this->timedActivityLifecycle->clear($lockedUser, $activity);

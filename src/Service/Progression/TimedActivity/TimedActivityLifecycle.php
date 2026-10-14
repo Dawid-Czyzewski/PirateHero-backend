@@ -6,6 +6,7 @@ namespace App\Service\Progression\TimedActivity;
 
 use App\Entity\Mission;
 use App\Entity\ShipVoyage;
+use App\Entity\TavernJob;
 use App\Entity\Training;
 use App\Entity\User;
 use App\Entity\UserActualActivity;
@@ -45,6 +46,11 @@ final class TimedActivityLifecycle
     public function startVoyage(User $user, ShipVoyage $voyage): UserActualActivity
     {
         return $this->start($user, TimedActivityType::Voyage, $voyage);
+    }
+
+    public function startTavernJob(User $user, TavernJob $job): UserActualActivity
+    {
+        return $this->start($user, TimedActivityType::TavernJob, $job);
     }
 
     public function clear(User $user, UserActualActivity $activity): void
@@ -125,6 +131,20 @@ final class TimedActivityLifecycle
         return [$activity, $voyage];
     }
 
+    /**
+     * @return array{0: UserActualActivity, 1: TavernJob}
+     */
+    public function requireActiveTavernJob(User $user): array
+    {
+        $activity = $this->requireActivity($user);
+        $job = $activity->getTavernJob();
+        if ($job === null) {
+            throw new BusinessRuleException('noTavernJobForActivity');
+        }
+
+        return [$activity, $job];
+    }
+
     private function requireActivity(User $user): UserActualActivity
     {
         $activity = $user->getCurrentActivity();
@@ -135,7 +155,7 @@ final class TimedActivityLifecycle
         return $activity;
     }
 
-    private function start(User $user, TimedActivityType $type, Mission|Work|Training|ShipVoyage $subject): UserActualActivity
+    private function start(User $user, TimedActivityType $type, Mission|Work|Training|ShipVoyage|TavernJob $subject): UserActualActivity
     {
         $this->assertNoActivityInProgress($user);
 
@@ -148,6 +168,7 @@ final class TimedActivityLifecycle
             TimedActivityType::Work => $activity->setWork($subject instanceof Work ? $subject : null),
             TimedActivityType::Training => $activity->setTraining($subject instanceof Training ? $subject : null),
             TimedActivityType::Voyage => $activity->setShipVoyage($subject instanceof ShipVoyage ? $subject : null),
+            TimedActivityType::TavernJob => $activity->setTavernJob($subject instanceof TavernJob ? $subject : null),
         };
 
         $user->setCurrentActivity($activity);

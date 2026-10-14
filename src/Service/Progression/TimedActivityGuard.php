@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service\Progression;
 
 use App\Entity\Mission;
+use App\Entity\TavernJob;
 use App\Entity\Training;
 use App\Entity\User;
 use App\Entity\Work;
@@ -33,6 +34,10 @@ final class TimedActivityGuard
 
         if ($activity->getShipVoyage() !== null) {
             throw new BusinessRuleException('finishVoyageFirst');
+        }
+
+        if ($activity->getTavernJob() !== null) {
+            throw new BusinessRuleException('finishTavernJobFirst');
         }
     }
 
@@ -72,6 +77,19 @@ final class TimedActivityGuard
         $activeTraining = $currentActivity->getTraining();
         if ($activeTraining !== null && $activeTraining->getId() !== $training->getId()) {
             throw new BusinessRuleException('cancelCurrentTrainingFirst');
+        }
+    }
+
+    public function assertNoOtherTavernJobInProgress(User $user, TavernJob $job): void
+    {
+        $currentActivity = $user->getCurrentActivity();
+        if ($currentActivity === null) {
+            return;
+        }
+
+        $activeJob = $currentActivity->getTavernJob();
+        if ($activeJob !== null && $activeJob->getId() !== $job->getId()) {
+            throw new BusinessRuleException('cancelCurrentTavernJobFirst');
         }
     }
 }

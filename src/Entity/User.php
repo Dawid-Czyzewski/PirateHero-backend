@@ -170,6 +170,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?PlayerTitle $equippedTitle = null;
 
+    #[ORM\ManyToOne(targetEntity: CompanionTemplate::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?CompanionTemplate $equippedCompanion = null;
+
     #[ORM\OneToMany(targetEntity: UserRefill::class, mappedBy: 'user', cascade: ['persist', 'remove'])]
     private Collection $userRefills;
 
@@ -1137,6 +1141,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setEquippedTitle(?PlayerTitle $equippedTitle): static
     {
         $this->equippedTitle = $equippedTitle;
+
+        return $this;
+    }
+
+    public function getEquippedCompanion(): ?CompanionTemplate
+    {
+        return $this->equippedCompanion;
+    }
+
+    public function setEquippedCompanion(?CompanionTemplate $equippedCompanion): static
+    {
+        $this->equippedCompanion = $equippedCompanion;
 
         return $this;
     }

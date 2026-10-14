@@ -10,4 +10,5 @@ enum TimedActivityType: string
     case Work = 'work';
     case Training = 'training';
     case Voyage = 'voyage';
+    case TavernJob = 'tavern_job';
 }

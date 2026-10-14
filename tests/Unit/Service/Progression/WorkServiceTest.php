@@ -10,6 +10,7 @@ use App\Entity\User;
 use App\Entity\UserActualActivity;
 use App\Entity\Work;
 use App\Exception\BusinessRuleException;
+use App\Service\Progression\CompanionService;
 use App\Service\Progression\TimedActivity\OwnedTimedActivityResolver;
 use App\Service\Progression\TimedActivity\TimedActivityLifecycle;
 use App\Service\Progression\UserWriteLockExecutor;
@@ -77,6 +78,8 @@ final class WorkServiceTest extends TestCase
         $shipMembership->method('getShipForUser')->willReturn($ship);
 
         $em = $this->createMock(EntityManagerInterface::class);
+        $companion = $this->createMock(CompanionService::class);
+        $companion->method('workGoldBonusPercentForUser')->willReturn(0);
         $service = new WorkService(
             $em,
             $shipMembership,
@@ -84,6 +87,7 @@ final class WorkServiceTest extends TestCase
             new UserWriteLockExecutor($em),
             new TimedActivityLifecycle($em),
             new OwnedTimedActivityResolver($em),
+            $companion,
         );
 
         $user = $this->makeUser();
@@ -100,6 +104,9 @@ final class WorkServiceTest extends TestCase
 
     private function makeService(EntityManagerInterface $em): WorkService
     {
+        $companion = $this->createMock(CompanionService::class);
+        $companion->method('workGoldBonusPercentForUser')->willReturn(0);
+
         return new WorkService(
             $em,
             $this->createMock(ShipMembershipService::class),
@@ -107,6 +114,7 @@ final class WorkServiceTest extends TestCase
             new UserWriteLockExecutor($em),
             new TimedActivityLifecycle($em),
             new OwnedTimedActivityResolver($em),
+            $companion,
         );
     }
 

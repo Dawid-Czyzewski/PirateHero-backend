@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Service\Progression;
 
 use App\Entity\Mission;
+use App\Entity\TavernJob;
 use App\Entity\Training;
 use App\Entity\User;
 use App\Entity\UserActualActivity;
@@ -48,6 +49,16 @@ final class TimedActivityGuardTest extends TestCase
 
         $this->expectException(BusinessRuleException::class);
         $this->expectExceptionMessage('finishTrainingFirst');
+
+        (new TimedActivityGuard())->assertNoTimedActivity($user);
+    }
+
+    public function testBlocksDuringTavernJob(): void
+    {
+        $user = $this->userWithActivity(tavernJob: new TavernJob());
+
+        $this->expectException(BusinessRuleException::class);
+        $this->expectExceptionMessage('finishTavernJobFirst');
 
         (new TimedActivityGuard())->assertNoTimedActivity($user);
     }
@@ -100,11 +111,13 @@ final class TimedActivityGuardTest extends TestCase
         ?Mission $mission = null,
         ?Work $work = null,
         ?Training $training = null,
+        ?TavernJob $tavernJob = null,
     ): User {
         $activity = new UserActualActivity();
         $activity->setMission($mission);
         $activity->setWork($work);
         $activity->setTraining($training);
+        $activity->setTavernJob($tavernJob);
 
         $user = new User();
         $user->setCurrentActivity($activity);

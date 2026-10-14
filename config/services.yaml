@@ -38,6 +38,9 @@ services:
     App\Service\MiniGames\CoinFlipRandomInterface:
         '@App\Service\MiniGames\SecureCoinFlipRandom'
 
+    App\Service\MiniGames\TavernDiceRandomInterface:
+        '@App\Service\MiniGames\SecureTavernDiceRandom'
+
     App\Service\Bestiary\BestiaryService:
         arguments:
             $unlockAllForTesting: '%env(bool:default:bestiary_unlock_all_default:BESTIARY_UNLOCK_ALL)%'

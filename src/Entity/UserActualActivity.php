@@ -40,6 +40,11 @@ class UserActualActivity
     #[Groups(['user:read'])]
     private ?ShipVoyage $shipVoyage = null;
 
+    #[ORM\ManyToOne(targetEntity: TavernJob::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    #[Groups(['user:read'])]
+    private ?TavernJob $tavernJob = null;
+
     #[ORM\Column(type: 'datetime')]
     #[Groups(['user:read'])]
     private ?\DateTimeInterface $startTime = null;
@@ -105,6 +110,18 @@ class UserActualActivity
     public function setShipVoyage(?ShipVoyage $shipVoyage): self
     {
         $this->shipVoyage = $shipVoyage;
+
+        return $this;
+    }
+
+    public function getTavernJob(): ?TavernJob
+    {
+        return $this->tavernJob;
+    }
+
+    public function setTavernJob(?TavernJob $tavernJob): self
+    {
+        $this->tavernJob = $tavernJob;
 
         return $this;
     }

@@ -22,6 +22,7 @@ use App\Controller\UserActivateAccountController;
 use App\Controller\UserController;
 use App\Controller\UserRegisterController;
 use App\Controller\UserSkillPointsController;
+use App\Controller\TavernController;
 use App\Controller\TreasureMapController;
 use App\Controller\WeekendTournamentController;
 use App\Controller\WeeklyArenaFameController;
@@ -219,6 +220,30 @@ use App\Entity\User;
         new Post(
             uriTemplate: '/users/treasure-map/claim',
             controller: TreasureMapController::class.'::claim',
+            security: "is_granted('IS_AUTHENTICATED_FULLY')",
+            read: false,
+        ),
+        new Get(
+            uriTemplate: '/users/tavern/status',
+            controller: TavernController::class.'::getStatus',
+            security: "is_granted('IS_AUTHENTICATED_FULLY')",
+            read: false,
+        ),
+        new Post(
+            uriTemplate: '/users/tavern/jobs/start',
+            controller: TavernController::class.'::startJob',
+            security: "is_granted('IS_AUTHENTICATED_FULLY')",
+            read: false,
+        ),
+        new Post(
+            uriTemplate: '/users/tavern/jobs/complete',
+            controller: TavernController::class.'::completeJob',
+            security: "is_granted('IS_AUTHENTICATED_FULLY')",
+            read: false,
+        ),
+        new Post(
+            uriTemplate: '/users/tavern/jobs/cancel',
+            controller: TavernController::class.'::cancelJob',
             security: "is_granted('IS_AUTHENTICATED_FULLY')",
             read: false,
         ),
