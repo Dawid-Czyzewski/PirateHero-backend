@@ -7,6 +7,7 @@ namespace App\Repository;
 use App\Entity\User;
 use App\Entity\UserDailyChallenge;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -28,7 +29,7 @@ class UserDailyChallengeRepository extends ServiceEntityRepository
             ->andWhere('c.user = :user')
             ->andWhere('c.challengeDate = :date')
             ->setParameter('user', $user)
-            ->setParameter('date', $date)
+            ->setParameter('date', $date, Types::DATE_IMMUTABLE)
             ->orderBy('c.slot', 'ASC')
             ->getQuery()
             ->getResult();
