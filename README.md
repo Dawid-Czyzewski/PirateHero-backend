@@ -2,6 +2,8 @@ English below:
 
 # PirateHero Backend
 
+[![CI](https://github.com/Dawid-Czyzewski/PirateHero-backend/actions/workflows/ci.yml/badge.svg)](https://github.com/Dawid-Czyzewski/PirateHero-backend/actions/workflows/ci.yml)
+
 Backend gry PirateHero — przeglądarkowego RPG w klimacie pirackim. Udostępnia REST API dla progresji postaci, walk, lochów, ekonomii i mechanik społecznościowych.
 
 ## Zakres

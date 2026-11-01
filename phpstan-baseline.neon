@@ -1,0 +1,283 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Strict comparison using \=\=\= between Symfony\\Component\\Console\\Command\\Command and null will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: src/Command/SeedGameCoreCommand.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Symfony\\Component\\Console\\Application\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Command/SeedGameCoreCommand.php
+
+		-
+			message: '#^Access to offset ''code'' on an unknown class App\\Progression\\TitleDef\.$#'
+			identifier: class.notFound
+			count: 4
+			path: src/Command/SeedPlayerTitlesCommand.php
+
+		-
+			message: '#^Access to offset ''sortOrder'' on an unknown class App\\Progression\\TitleDef\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Command/SeedPlayerTitlesCommand.php
+
+		-
+			message: '#^Access to offset ''unlockDungeonId'' on an unknown class App\\Progression\\TitleDef\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Command/SeedPlayerTitlesCommand.php
+
+		-
+			message: '#^Access to offset ''unlockType'' on an unknown class App\\Progression\\TitleDef\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Command/SeedPlayerTitlesCommand.php
+
+		-
+			message: '#^Access to offset ''unlockValue'' on an unknown class App\\Progression\\TitleDef\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Command/SeedPlayerTitlesCommand.php
+
+		-
+			message: '#^Offset ''COMMON''\|''EPIC''\|''LEGENDARY''\|''RARE''\|''UNCOMMON'' on array\{COMMON\: 1\.0, UNCOMMON\: 1\.2, RARE\: 1\.5, EPIC\: 2\.0, LEGENDARY\: 3\.0\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Domain/Constants/WearableUpgradeConstants.php
+
+		-
+			message: '#^Offset ''COMMON''\|''EPIC''\|''LEGENDARY''\|''RARE''\|''UNCOMMON'' on array\{COMMON\: 3, UNCOMMON\: 4, RARE\: 5, EPIC\: 7, LEGENDARY\: 10\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Domain/Constants/WearableUpgradeConstants.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>value" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Domain/Constants/WearableUpgradeConstants.php
+
+		-
+			message: '#^Comparison operation "\<\=" between 1\|5\|15\|25\|54 and 0 is always false\.$#'
+			identifier: smallerOrEqual.alwaysFalse
+			count: 1
+			path: src/Domain/WearableRarityWeightedPicker.php
+
+		-
+			message: '#^Comparison operation "\<\=" between int\<1, max\> and 0 is always false\.$#'
+			identifier: smallerOrEqual.alwaysFalse
+			count: 1
+			path: src/Domain/WearableRarityWeightedPicker.php
+
+		-
+			message: '#^Result of \|\| is always false\.$#'
+			identifier: booleanOr.alwaysFalse
+			count: 1
+			path: src/Domain/WearableRarityWeightedPicker.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between non\-empty\-list\<string\> and array\{\} will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: src/Domain/WearableRarityWeightedPicker.php
+
+		-
+			message: '#^Method App\\Progression\\PlayerTitleCatalog\:\:definitions\(\) has invalid return type App\\Progression\\TitleDef\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Progression/PlayerTitleCatalog.php
+
+		-
+			message: '#^Method App\\Progression\\PlayerTitleCatalog\:\:definitions\(\) should return list\<App\\Progression\\TitleDef\> but returns non\-empty\-list\<array\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Progression/PlayerTitleCatalog.php
+
+		-
+			message: '#^Method App\\Progression\\PlayerTitleCatalog\:\:row\(\) has invalid return type App\\Progression\\TitleDef\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Progression/PlayerTitleCatalog.php
+
+		-
+			message: '#^PHPDoc tag @return with type App\\Progression\\TitleDef is incompatible with native type array\.$#'
+			identifier: return.phpDocType
+			count: 1
+			path: src/Progression/PlayerTitleCatalog.php
+
+		-
+			message: '#^If condition is always true\.$#'
+			identifier: if.alwaysTrue
+			count: 1
+			path: src/Service/Dungeon/DungeonService.php
+
+		-
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 1
+			path: src/Service/Dungeon/DungeonService.php
+
+		-
+			message: '#^Method App\\Service\\Progression\\CompanionService\:\:equip\(\) should return array\{equipped\: bool, equippedCode\: string\} but returns App\\Service\\Progression\\T\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/Progression/CompanionService.php
+
+		-
+			message: '#^Method App\\Service\\Progression\\CompanionService\:\:feed\(\) should return array\<string, mixed\> but returns App\\Service\\Progression\\T\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/Progression/CompanionService.php
+
+		-
+			message: '#^Method App\\Service\\Progression\\CompanionService\:\:unequip\(\) should return array\{equipped\: bool, equippedCode\: null\} but returns App\\Service\\Progression\\T\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/Progression/CompanionService.php
+
+		-
+			message: '#^Method App\\Service\\Progression\\CompanionService\:\:useAbility\(\) should return array\<string, mixed\> but returns App\\Service\\Progression\\T\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/Progression/CompanionService.php
+
+		-
+			message: '#^Parameter \#2 \$callback of method App\\Service\\Progression\\UserWriteLockExecutor\:\:execute\(\) expects callable\(App\\Entity\\User\)\: App\\Service\\Progression\\T, Closure\(App\\Entity\\User\)\: array\{companions\: list\<array\<string, mixed\>\>, equippedCode\: string\|null, abilityReady\: bool, canFeed\: bool, unclaimedCount\: int\} given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Service/Progression/CompanionService.php
+
+		-
+			message: '#^Parameter \#2 \$callback of method App\\Service\\Progression\\UserWriteLockExecutor\:\:execute\(\) expects callable\(App\\Entity\\User\)\: App\\Service\\Progression\\T, Closure\(App\\Entity\\User\)\: array\{equipped\: false, equippedCode\: null\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Progression/CompanionService.php
+
+		-
+			message: '#^Parameter \#2 \$callback of method App\\Service\\Progression\\UserWriteLockExecutor\:\:execute\(\) expects callable\(App\\Entity\\User\)\: App\\Service\\Progression\\T, Closure\(App\\Entity\\User\)\: array\{equipped\: true, equippedCode\: string\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Progression/CompanionService.php
+
+		-
+			message: '#^Offset ''levelUp'' on array\{levelUp\: bool, currentLevel\: string, currentExp\: int, expToNextLevel\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/Progression/DailyChallengeService.php
+
+		-
+			message: '#^Method App\\Service\\Progression\\MissionService\:\:completeMission\(\) should return array but returns App\\Service\\Progression\\T\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/Progression/MissionService.php
+
+		-
+			message: '#^Method App\\Service\\Progression\\MissionService\:\:skipMission\(\) should return array but returns App\\Service\\Progression\\T\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/Progression/MissionService.php
+
+		-
+			message: '#^Parameter \#2 \$callback of method App\\Service\\Progression\\UserWriteLockExecutor\:\:execute\(\) expects callable\(App\\Entity\\User\)\: App\\Service\\Progression\\T, Closure\(App\\Entity\\User\)\: array\{diamondsSpent\: int, diamonds\: int, startTime\: non\-falsy\-string, readyToClaim\: true\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Progression/MissionService.php
+
+		-
+			message: '#^Parameter \#2 \$callback of method App\\Service\\Progression\\UserWriteLockExecutor\:\:execute\(\) expects callable\(App\\Entity\\User\)\: App\\Service\\Progression\\T, Closure\(App\\Entity\\User\)\: array\{earnedGold\: int, earnedExp\: int, bonusPercent\: int, levelData\: array\<string, mixed\>\|null, diamondsSpent\: int\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Progression/MissionService.php
+
+		-
+			message: '#^Parameter \#2 \$callback of method App\\Service\\Progression\\UserWriteLockExecutor\:\:execute\(\) expects callable\(App\\Entity\\User\)\: App\\Service\\Progression\\T, Closure\(App\\Entity\\User\)\: void given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Service/Progression/MissionService.php
+
+		-
+			message: '#^Method App\\Service\\Progression\\TavernJobService\:\:cancel\(\) should return array\<string, mixed\> but returns App\\Service\\Progression\\T\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/Progression/TavernJobService.php
+
+		-
+			message: '#^Method App\\Service\\Progression\\TavernJobService\:\:complete\(\) should return array\<string, mixed\> but returns App\\Service\\Progression\\T\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/Progression/TavernJobService.php
+
+		-
+			message: '#^Method App\\Service\\Progression\\TavernJobService\:\:start\(\) should return array\<string, mixed\> but returns App\\Service\\Progression\\T\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/Progression/TavernJobService.php
+
+		-
+			message: '#^Parameter \#2 \$callback of method App\\Service\\Progression\\UserWriteLockExecutor\:\:execute\(\) expects callable\(App\\Entity\\User\)\: App\\Service\\Progression\\T, Closure\(App\\Entity\\User\)\: array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Service/Progression/TavernJobService.php
+
+		-
+			message: '#^Parameter \#2 \$callback of method App\\Service\\Progression\\UserWriteLockExecutor\:\:execute\(\) expects callable\(App\\Entity\\User\)\: App\\Service\\Progression\\T, Closure\(App\\Entity\\User\)\: array\{rewardGold\: int, rewardDiamonds\: int, status\: array\<string, mixed\>\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Progression/TavernJobService.php
+
+		-
+			message: '#^Parameter \#2 \$callback of method App\\Service\\Progression\\UserWriteLockExecutor\:\:execute\(\) expects callable\(App\\Entity\\User\)\: App\\Service\\Progression\\T, Closure\(App\\Entity\\User\)\: void given\.$#'
+			identifier: argument.type
+			count: 3
+			path: src/Service/Progression/TrainingService.php
+
+		-
+			message: '#^Call to function method_exists\(\) with App\\Entity\\WearableItem and ''getNameKey'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Service/Progression/TreasureMapProgressService.php
+
+		-
+			message: '#^Method App\\Service\\Progression\\UserWriteLockExecutor\:\:execute\(\) has invalid return type App\\Service\\Progression\\T\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Service/Progression/UserWriteLockExecutor.php
+
+		-
+			message: '#^Parameter \$callback of method App\\Service\\Progression\\UserWriteLockExecutor\:\:execute\(\) has invalid type App\\Service\\Progression\\T\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Service/Progression/UserWriteLockExecutor.php
+
+		-
+			message: '#^Method App\\Service\\Progression\\WorkService\:\:completeWork\(\) should return array\{earnedGold\: int, bonusPercent\: int\} but returns App\\Service\\Progression\\T\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/Progression/WorkService.php
+
+		-
+			message: '#^Parameter \#2 \$callback of method App\\Service\\Progression\\UserWriteLockExecutor\:\:execute\(\) expects callable\(App\\Entity\\User\)\: App\\Service\\Progression\\T, Closure\(App\\Entity\\User\)\: array\{earnedGold\: int, bonusPercent\: int\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Progression/WorkService.php
+
+		-
+			message: '#^Parameter \#2 \$callback of method App\\Service\\Progression\\UserWriteLockExecutor\:\:execute\(\) expects callable\(App\\Entity\\User\)\: App\\Service\\Progression\\T, Closure\(App\\Entity\\User\)\: void given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Service/Progression/WorkService.php
+
+		-
+			message: '#^Offset ''levelUp'' on array\{levelUp\: bool, currentLevel\: string, currentExp\: int, expToNextLevel\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/Ship/ShipVoyageService.php
+
+		-
+			message: '#^PHPDoc tag @return with type list\<array\<string, int\|string\>\> is incompatible with native type void\.$#'
+			identifier: return.phpDocType
+			count: 1
+			path: src/Service/ShopBoosters/ShopBoosterSessionService.php
