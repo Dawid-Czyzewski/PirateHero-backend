@@ -29,7 +29,7 @@ final class ApiExceptionSubscriberTest extends TestCase
     protected function setUp(): void
     {
         $logger = $this->createMock(LoggerInterface::class);
-        $this->subscriber = new ApiExceptionSubscriber($logger, 'test');
+        $this->subscriber = new ApiExceptionSubscriber($logger, 'test', false);
     }
 
     public function testBusinessRuleExceptionMapsTo400ProblemJson(): void
