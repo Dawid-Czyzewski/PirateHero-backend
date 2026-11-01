@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    env:
+      # Dummy values for CI only - no real secrets.
+      APP_ENV: test
+      APP_DEBUG: '1'
+      APP_SECRET: ci-dummy-app-secret
+      DATABASE_HOST: 127.0.0.1
+      DATABASE_PORT: '3306'
+      DATABASE_NAME: app
+      DATABASE_USER: app
+      DATABASE_PASSWORD: app
+      DATABASE_SERVER_VERSION: '8.0'
+      TEST_DATABASE_PATH: ${{ github.workspace }}/var/test.db
+      CORS_ALLOW_ORIGIN: '^https?://localhost(:[0-9]+)?$'
+      FRONTEND_URL: http://localhost:3000
+      JWT_SECRET_STRING: ci-dummy-jwt-secret-ci-dummy-jwt-secret-0000
+      MAILER_DSN: null://null
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: ctype, iconv, intl, mbstring, pdo_sqlite, sodium, xml
+          coverage: none
+          tools: composer:v2
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache/files
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      # .env is not committed; Symfony runtime needs the file to exist (values come from env above).
+      - name: Create empty .env
+        run: touch .env
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: PHPUnit
+        run: vendor/bin/phpunit
+
+      - name: Warm up dev container for PHPStan
+        run: php bin/console cache:warmup
+        env:
+          APP_ENV: dev
+
+      - name: PHPStan
+        run: vendor/bin/phpstan analyse --memory-limit=1G --no-progress
+        env:
+          APP_ENV: dev
