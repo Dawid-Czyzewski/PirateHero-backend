@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
+                    https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+
+    <embeddable name="App\Character\Domain\Model\Wallet">
+        <field name="cebuliony" type="integer" column="cebuliony"/>
+        <field name="zloteZeby" type="integer" column="zlote_zeby"/>
+        <field name="kondycha" type="integer" column="kondycha"/>
+        <field name="zasiegi" type="integer" column="zasiegi"/>
+        <field name="medale" type="integer" column="medale"/>
+    </embeddable>
+</doctrine-mapping>
