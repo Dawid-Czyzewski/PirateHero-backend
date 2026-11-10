@@ -1,0 +1,61 @@
+deptrac:
+  paths:
+    - ./src
+  layers:
+    - name: SharedDomain
+      collectors:
+        - type: directory
+          value: src/Shared/Domain/.*
+    - name: IdentityDomain
+      collectors:
+        - type: directory
+          value: src/Identity/Domain/.*
+    - name: CharacterDomain
+      collectors:
+        - type: directory
+          value: src/Character/Domain/.*
+    - name: Application
+      collectors:
+        - type: directory
+          value: src/.*/Application/.*
+    - name: Infrastructure
+      collectors:
+        - type: directory
+          value: src/.*/Infrastructure/.*
+    - name: Presentation
+      collectors:
+        - type: directory
+          value: src/.*/Presentation/.*
+    - name: Framework
+      collectors:
+        - type: classNameRegex
+          value: '#^(Symfony|Doctrine|ApiPlatform|Gesdinet|Lexik|Nelmio|Zenstruck)\\#'
+    - name: Psr
+      collectors:
+        - type: classNameRegex
+          value: '#^Psr\\#'
+  ruleset:
+    SharedDomain: ~
+    IdentityDomain:
+      - SharedDomain
+    CharacterDomain:
+      - SharedDomain
+    Application:
+      - SharedDomain
+      - IdentityDomain
+      - CharacterDomain
+      - Psr
+    Infrastructure:
+      - SharedDomain
+      - IdentityDomain
+      - CharacterDomain
+      - Application
+      - Framework
+      - Psr
+    Presentation:
+      - SharedDomain
+      - IdentityDomain
+      - CharacterDomain
+      - Application
+      - Infrastructure
+      - Framework

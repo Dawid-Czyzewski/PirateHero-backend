@@ -1,0 +1,7 @@
+framework:
+    rate_limiter:
+        register:
+            policy: sliding_window
+            limit: 5
+            interval: '15 minutes'
+

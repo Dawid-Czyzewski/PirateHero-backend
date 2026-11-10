@@ -1,0 +1,7 @@
+gesdinet_jwt_refresh_token:
+    refresh_token_class: App\Identity\Infrastructure\Security\RefreshToken
+    ttl: 2592000
+    single_use: true
+    token_parameter_name: refresh_token
+    hash_tokens:
+        enabled: true

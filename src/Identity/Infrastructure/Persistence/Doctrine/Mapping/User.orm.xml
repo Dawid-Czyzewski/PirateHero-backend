@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
+                    https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+
+    <entity name="App\Identity\Domain\Model\User" table="users">
+        <id name="id" type="user_id" column="id"/>
+
+        <field name="email" type="email" column="email" length="180" unique="true"/>
+        <field name="nick" type="nick" column="nick" length="16" unique="true"/>
+        <field name="password" type="hashed_password" column="password" length="255"/>
+        <field name="roles" type="json" column="roles"/>
+        <field name="createdAt" type="datetime_immutable" column="created_at"/>
+    </entity>
+</doctrine-mapping>

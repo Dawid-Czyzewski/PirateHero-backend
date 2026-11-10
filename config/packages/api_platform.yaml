@@ -1,0 +1,27 @@
+api_platform:
+    title: Freak Legends API
+    description: REST API of the FREAK LEGENDS browser game.
+    version: 0.1.0
+    mapping:
+        paths:
+            - '%kernel.project_dir%/src/Identity/Presentation/Api'
+            - '%kernel.project_dir%/src/Character/Presentation/Api'
+    formats:
+        json: ['application/json']
+        jsonld: ['application/ld+json']
+    docs_formats:
+        jsonopenapi: ['application/vnd.openapi+json']
+        jsonld: ['application/ld+json']
+        html: ['text/html']
+    error_formats:
+        jsonproblem: ['application/problem+json']
+        json: ['application/json']
+    swagger:
+        api_keys:
+            JWT:
+                name: Authorization
+                type: header
+    defaults:
+        stateless: true
+        cache_headers:
+            vary: ['Content-Type', 'Authorization', 'Origin']
