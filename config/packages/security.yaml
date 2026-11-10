@@ -27,18 +27,25 @@ security:
                 max_attempts: 5
                 interval: '1 minute'
 
+        auth:
+            pattern: ^/api/auth/(refresh|logout)$
+            stateless: true
+            provider: app_user_provider
+            refresh_jwt:
+                check_path: /api/auth/refresh
+                invalidate_token_on_logout: false
+            logout:
+                path: api_auth_logout
+
         api:
             pattern: ^/api
             stateless: true
             provider: app_user_provider
-            entry_point: jwt
             jwt: ~
-            refresh_jwt:
-                check_path: /api/auth/refresh
 
     # Note: Only the *first* matching rule is applied
     access_control:
-        - { path: ^/api/auth/(login|register|refresh)$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/(login|register|refresh|logout)$, roles: PUBLIC_ACCESS }
         - { path: ^/api/docs, roles: PUBLIC_ACCESS }
         - { path: ^/api/health$, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: ROLE_USER }

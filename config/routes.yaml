@@ -17,3 +17,7 @@ api_auth_login:
 api_auth_refresh:
     path: /api/auth/refresh
     methods: [POST]
+
+api_auth_logout:
+    path: /api/auth/logout
+    methods: [POST]

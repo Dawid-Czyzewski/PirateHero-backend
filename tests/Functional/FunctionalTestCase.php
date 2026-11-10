@@ -7,6 +7,7 @@ namespace App\Tests\Functional;
 use ApiPlatform\Symfony\Bundle\Test\ApiTestCase;
 use ApiPlatform\Symfony\Bundle\Test\Client;
 use Psr\Cache\CacheItemPoolInterface;
+use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 use Zenstruck\Foundry\Test\Factories;
 use Zenstruck\Foundry\Test\ResetDatabase;
@@ -15,6 +16,9 @@ abstract class FunctionalTestCase extends ApiTestCase
 {
     use Factories;
     use ResetDatabase;
+
+    protected const ACCESS_COOKIE = 'access_token';
+    protected const REFRESH_COOKIE = 'refresh_token';
 
     protected static ?bool $alwaysBootKernel = true;
 
@@ -62,11 +66,32 @@ abstract class FunctionalTestCase extends ApiTestCase
      */
     protected function login(string $email, string $password): array
     {
-        $data = self::data($this->postJson('/api/auth/login', ['email' => $email, 'password' => $password]));
+        $this->postJson('/api/auth/login', ['email' => $email, 'password' => $password]);
         self::assertResponseIsSuccessful();
-        self::assertIsString($data['token'] ?? null);
-        self::assertIsString($data['refresh_token'] ?? null);
 
-        return ['token' => $data['token'], 'refresh_token' => $data['refresh_token']];
+        return [
+            'token' => $this->requiredCookieValue(self::ACCESS_COOKIE),
+            'refresh_token' => $this->requiredCookieValue(self::REFRESH_COOKIE),
+        ];
+    }
+
+    protected function responseCookie(string $name): ?Cookie
+    {
+        foreach ($this->client->getKernelBrowser()->getResponse()->headers->getCookies() as $cookie) {
+            if ($cookie->getName() === $name) {
+                return $cookie;
+            }
+        }
+
+        return null;
+    }
+
+    private function requiredCookieValue(string $name): string
+    {
+        $value = $this->responseCookie($name)?->getValue();
+        self::assertIsString($value);
+        self::assertNotSame('', $value);
+
+        return $value;
     }
 }

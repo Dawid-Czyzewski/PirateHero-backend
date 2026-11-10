@@ -117,15 +117,16 @@ Dokumentacja API (Swagger UI): <http://127.0.0.1:8000/api/docs>
 | Metoda | Ścieżka | Dostęp | Opis |
 |---|---|---|---|
 | `POST` | `/api/auth/register` | publiczny, limit 5 / 15 min na IP | Rejestracja: `email`, `nick` (3–16 znaków), `password` (min. 8). Zwraca 201 i użytkownika, 422 przy błędach walidacji lub zajętym email/nicku, 429 po przekroczeniu limitu. |
-| `POST` | `/api/auth/login` | publiczny, limit 5 / min na email + IP | Logowanie: `email`, `password`. Zwraca `token` (JWT, ważny 1 dzień) i `refresh_token` (30 dni). |
-| `POST` | `/api/auth/refresh` | publiczny | `refresh_token` → nowy `token` i nowy `refresh_token` (stary przestaje działać). |
-| `GET` | `/api/me` | `ROLE_USER` (Bearer JWT) | Zalogowany użytkownik. 401 bez tokena. |
+| `POST` | `/api/auth/login` | publiczny, limit 5 / min na email + IP | Logowanie: `email`, `password`. Ustawia httpOnly cookie `access_token` (JWT, 1 dzień, ścieżka `/api`) i `refresh_token` (30 dni, ścieżka `/api/auth`), body puste. |
+| `POST` | `/api/auth/refresh` | publiczny | Refresh token z cookie (albo `refresh_token` w body) → nowe cookie `access_token` i `refresh_token` (stary przestaje działać). |
+| `POST` | `/api/auth/logout` | publiczny | Unieważnia refresh token z cookie i kasuje oba cookie. Zawsze 204. |
+| `GET` | `/api/me` | `ROLE_USER` (cookie albo Bearer JWT) | Zalogowany użytkownik. 401 bez tokena. |
 | `POST` | `/api/characters` | `ROLE_USER` (Bearer JWT) | Tworzy postać zalogowanego gracza. Body: `face`, `hair`, `beard`, `tattoo` (0–7), `skin` (0–4). Zwraca 201 i postać, 401 bez tokena, 409 gdy gracz ma już postać (`Character already exists.`), 422 przy brakującym polu lub wartości spoza zakresu. |
 | `GET` | `/api/me/character` | `ROLE_USER` (Bearer JWT) | Postać zalogowanego gracza: 200, 401 bez tokena, 404 gdy gracz nie ma postaci (`Character not found.`). |
 | `GET` | `/api/health` | publiczny | Stan API i połączenia z bazą: `{"status":"ok","db":"ok"}` (200) albo `{"status":"error","db":"error"}` (503). |
 | `GET` | `/api/docs` | publiczny | Dokumentacja OpenAPI / Swagger UI. |
 
-Wszystkie pozostałe ścieżki pod `/api` wymagają `ROLE_USER`. Hasło nigdy nie trafia do odpowiedzi, bo API zwraca osobny `UserResource` zbudowany z `UserView`, a nie encję. CORS przepuszcza tylko `http://localhost:3000` (`CORS_ALLOW_ORIGIN` w `.env`).
+Wszystkie pozostałe ścieżki pod `/api` wymagają `ROLE_USER`. Hasło nigdy nie trafia do odpowiedzi, bo API zwraca osobny `UserResource` zbudowany z `UserView`, a nie encję. CORS przepuszcza tylko `http://localhost:3000` (`CORS_ALLOW_ORIGIN` w `.env`) i pozwala na credentials, więc front wysyła żądania z `credentials: 'include'`. Cookie mają `SameSite=Lax`, a `Secure` jest wyłączone w `dev` i `test` (parametry `auth.cookie.*` w `config/services.yaml`). Front musi wołać API pod `http://localhost:8000`, nie `127.0.0.1`, bo inaczej przeglądarka uzna je za inną stronę i nie wyśle cookie. Nagłówek `Authorization: Bearer` nadal działa.
 
 ## Przykłady curl
 
@@ -139,27 +140,27 @@ curl -X POST http://127.0.0.1:8000/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email":"gracz@example.com","nick":"Cebulak","password":"tajnehaslo"}'
 
-# Logowanie -> {"token":"...","refresh_token":"..."}
-curl -X POST http://127.0.0.1:8000/api/auth/login \
+# Logowanie -> cookie access_token i refresh_token zapisane w cookies.txt
+curl -X POST http://localhost:8000/api/auth/login -c cookies.txt \
   -H "Content-Type: application/json" \
   -d '{"email":"gracz@example.com","password":"tajnehaslo"}'
 
 # Zalogowany użytkownik
-curl http://127.0.0.1:8000/api/me -H "Authorization: Bearer TOKEN"
+curl http://localhost:8000/api/me -b cookies.txt
 
 # Odświeżenie tokena
-curl -X POST http://127.0.0.1:8000/api/auth/refresh \
-  -H "Content-Type: application/json" \
-  -d '{"refresh_token":"REFRESH_TOKEN"}'
+curl -X POST http://localhost:8000/api/auth/refresh -b cookies.txt -c cookies.txt
+
+# Wylogowanie (204)
+curl -X POST http://localhost:8000/api/auth/logout -b cookies.txt -c cookies.txt
 
 # Utworzenie postaci (201)
-curl -X POST http://127.0.0.1:8000/api/characters \
+curl -X POST http://localhost:8000/api/characters -b cookies.txt \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer TOKEN" \
   -d '{"face":3,"hair":1,"beard":7,"tattoo":0,"skin":4}'
 
 # Moja postać (200 albo 404)
-curl http://127.0.0.1:8000/api/me/character -H "Authorization: Bearer TOKEN"
+curl http://localhost:8000/api/me/character -b cookies.txt
 ```
 
 Odpowiedź z postacią (201 i 200):

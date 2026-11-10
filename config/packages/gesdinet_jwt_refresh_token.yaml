@@ -2,6 +2,12 @@ gesdinet_jwt_refresh_token:
     refresh_token_class: App\Identity\Infrastructure\Security\RefreshToken
     ttl: 2592000
     single_use: true
-    token_parameter_name: refresh_token
+    token_parameter_name: '%auth.cookie.refresh_name%'
     hash_tokens:
         enabled: true
+    cookie:
+        enabled: true
+        path: '%auth.cookie.refresh_path%'
+        secure: '%auth.cookie.secure%'
+        same_site: '%auth.cookie.same_site%'
+        http_only: true

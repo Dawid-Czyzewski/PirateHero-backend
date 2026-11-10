@@ -7,6 +7,12 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    auth.cookie.access_name: access_token
+    auth.cookie.access_path: /api
+    auth.cookie.refresh_name: refresh_token
+    auth.cookie.refresh_path: /api/auth
+    auth.cookie.secure: true
+    auth.cookie.same_site: lax
 
 services:
     # default configuration for services in *this* file
@@ -36,3 +42,11 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+when@dev:
+    parameters:
+        auth.cookie.secure: false
+
+when@test:
+    parameters:
+        auth.cookie.secure: false
