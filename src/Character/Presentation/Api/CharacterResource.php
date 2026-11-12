@@ -49,6 +49,7 @@ final class CharacterResource
     public function __construct(
         #[ApiProperty(identifier: true)]
         public string $id,
+        public string $nick,
         public int $level,
         public int $maxHp,
         public CharacterStats $stats,
@@ -61,6 +62,7 @@ final class CharacterResource
     {
         return new self(
             $view->id,
+            $view->nick,
             $view->level,
             $view->maxHp,
             new CharacterStats(...$view->stats),

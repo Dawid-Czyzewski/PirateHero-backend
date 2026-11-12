@@ -38,6 +38,7 @@ services:
     App\Identity\Domain\Repository\UserRepository: '@App\Identity\Infrastructure\Persistence\Doctrine\DoctrineUserRepository'
     App\Identity\Domain\Service\PasswordHasher: '@App\Identity\Infrastructure\Security\SymfonyPasswordHasher'
     App\Character\Domain\Repository\CharacterRepository: '@App\Character\Infrastructure\Persistence\Doctrine\DoctrineCharacterRepository'
+    App\Character\Application\Player\PlayerNicks: '@App\Character\Infrastructure\Identity\IdentityPlayerNicks'
     App\Shared\Application\Security\CurrentUser: '@App\Identity\Infrastructure\Security\SymfonyCurrentUser'
 
     # add more service definitions when explicit configuration is needed

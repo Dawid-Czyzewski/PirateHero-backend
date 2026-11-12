@@ -28,10 +28,11 @@ final class CharacterApiTest extends FunctionalTestCase
 
     public function testCreatesCharacterWithStartingValues(): void
     {
-        $data = self::data($this->postJson('/api/characters', self::APPEARANCE, $this->tokenFor('gracz@example.com')));
+        $data = self::data($this->postJson('/api/characters', self::APPEARANCE, $this->tokenFor('gracz@example.com', 'Cebulak')));
 
         self::assertResponseStatusCodeSame(201);
         self::assertIsString($data['id'] ?? null);
+        self::assertSame('Cebulak', $data['nick']);
         self::assertSame(1, $data['level']);
         self::assertSame(15, $data['maxHp']);
         self::assertSame(['strength' => 1, 'endurance' => 1, 'technique' => 1, 'charisma' => 1], $data['stats']);
@@ -95,12 +96,13 @@ final class CharacterApiTest extends FunctionalTestCase
 
     public function testReadsOwnCharacter(): void
     {
-        $token = $this->tokenFor('gracz@example.com');
+        $token = $this->tokenFor('gracz@example.com', 'Kapitan');
         $created = self::data($this->postJson('/api/characters', self::APPEARANCE, $token));
 
         $data = self::data($this->getJson('/api/me/character', $token));
 
         self::assertResponseStatusCodeSame(200);
+        self::assertSame('Kapitan', $data['nick']);
         self::assertSame($created, $data);
     }
 
@@ -148,9 +150,9 @@ final class CharacterApiTest extends FunctionalTestCase
         return array_values(array_filter($expected, static fn (string $status): bool => \array_key_exists($status, $responses)));
     }
 
-    private function tokenFor(string $email): string
+    private function tokenFor(string $email, ?string $nick = null): string
     {
-        UserFactory::createOne(['email' => $email]);
+        UserFactory::createOne(null === $nick ? ['email' => $email] : ['email' => $email, 'nick' => $nick]);
 
         return $this->login($email, UserFactory::DEFAULT_PASSWORD)['token'];
     }

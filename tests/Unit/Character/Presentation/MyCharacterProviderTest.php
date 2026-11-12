@@ -12,6 +12,7 @@ use App\Character\Domain\Model\CharacterId;
 use App\Character\Presentation\Api\State\MyCharacterProvider;
 use App\Shared\Domain\Model\UserId;
 use App\Tests\Double\Character\InMemoryCharacterRepository;
+use App\Tests\Double\Character\InMemoryPlayerNicks;
 use App\Tests\Double\Shared\FixedCurrentUser;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -34,6 +35,7 @@ final class MyCharacterProviderTest extends TestCase
         $resource = $this->provider($characters, self::USER_ID)->provide(new Get());
 
         self::assertSame(self::CHARACTER_ID, $resource->id);
+        self::assertSame('Cebulak', $resource->nick);
         self::assertSame(7, $resource->appearance->beard);
         self::assertSame(10, $resource->wallet->zloteZeby);
     }
@@ -57,7 +59,7 @@ final class MyCharacterProviderTest extends TestCase
     {
         return new MyCharacterProvider(
             new FixedCurrentUser(null === $userId ? null : UserId::fromString($userId)),
-            new GetMyCharacterHandler($characters),
+            new GetMyCharacterHandler($characters, new InMemoryPlayerNicks([self::USER_ID => 'Cebulak'])),
         );
     }
 }

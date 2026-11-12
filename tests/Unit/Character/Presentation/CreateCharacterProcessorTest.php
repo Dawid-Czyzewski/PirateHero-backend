@@ -12,6 +12,7 @@ use App\Character\Presentation\Api\CreateCharacterInput;
 use App\Character\Presentation\Api\State\CreateCharacterProcessor;
 use App\Shared\Domain\Model\UserId;
 use App\Tests\Double\Character\InMemoryCharacterRepository;
+use App\Tests\Double\Character\InMemoryPlayerNicks;
 use App\Tests\Double\Shared\FixedCurrentUser;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
@@ -32,6 +33,7 @@ final class CreateCharacterProcessorTest extends TestCase
     {
         $resource = $this->processor(self::USER_ID)->process($this->input(skin: 4), new Post());
 
+        self::assertSame('Cebulak', $resource->nick);
         self::assertSame(1, $resource->level);
         self::assertSame(15, $resource->maxHp);
         self::assertSame(1, $resource->stats->endurance);
@@ -84,7 +86,7 @@ final class CreateCharacterProcessorTest extends TestCase
         return new CreateCharacterProcessor(
             new FixedCurrentUser(null === $userId ? null : UserId::fromString($userId)),
             new CreateCharacterHandler($this->characters),
-            new GetMyCharacterHandler($this->characters),
+            new GetMyCharacterHandler($this->characters, new InMemoryPlayerNicks([self::USER_ID => 'Cebulak'])),
         );
     }
 

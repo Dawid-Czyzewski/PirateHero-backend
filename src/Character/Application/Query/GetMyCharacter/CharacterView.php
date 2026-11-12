@@ -15,6 +15,7 @@ final readonly class CharacterView
      */
     public function __construct(
         public string $id,
+        public string $nick,
         public int $level,
         public int $maxHp,
         public array $stats,
@@ -23,7 +24,7 @@ final readonly class CharacterView
     ) {
     }
 
-    public static function fromCharacter(Character $character): self
+    public static function fromCharacter(Character $character, string $nick): self
     {
         $stats = $character->stats();
         $wallet = $character->wallet();
@@ -31,6 +32,7 @@ final readonly class CharacterView
 
         return new self(
             $character->id()->toString(),
+            $nick,
             $character->level()->value(),
             $character->maxHp(),
             [

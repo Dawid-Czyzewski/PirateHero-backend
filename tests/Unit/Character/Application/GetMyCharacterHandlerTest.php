@@ -12,6 +12,7 @@ use App\Character\Domain\Model\Character;
 use App\Character\Domain\Model\CharacterId;
 use App\Shared\Domain\Model\UserId;
 use App\Tests\Double\Character\InMemoryCharacterRepository;
+use App\Tests\Double\Character\InMemoryPlayerNicks;
 use PHPUnit\Framework\TestCase;
 
 final class GetMyCharacterHandlerTest extends TestCase
@@ -28,9 +29,10 @@ final class GetMyCharacterHandlerTest extends TestCase
             new Appearance(face: 3, hair: 1, beard: 7, skin: 4, tattoo: 0),
         ));
 
-        $view = (new GetMyCharacterHandler($characters))(new GetMyCharacterQuery(self::USER_ID));
+        $view = (new GetMyCharacterHandler($characters, self::nicks()))(new GetMyCharacterQuery(self::USER_ID));
 
         self::assertSame(self::CHARACTER_ID, $view->id);
+        self::assertSame('Cebulak', $view->nick);
         self::assertSame(1, $view->level);
         self::assertSame(15, $view->maxHp);
         self::assertSame(['strength' => 1, 'endurance' => 1, 'technique' => 1, 'charisma' => 1], $view->stats);
@@ -42,6 +44,11 @@ final class GetMyCharacterHandlerTest extends TestCase
     {
         $this->expectException(CharacterNotFound::class);
 
-        (new GetMyCharacterHandler(new InMemoryCharacterRepository()))(new GetMyCharacterQuery(self::USER_ID));
+        (new GetMyCharacterHandler(new InMemoryCharacterRepository(), self::nicks()))(new GetMyCharacterQuery(self::USER_ID));
+    }
+
+    private static function nicks(): InMemoryPlayerNicks
+    {
+        return new InMemoryPlayerNicks([self::USER_ID => 'Cebulak']);
     }
 }
