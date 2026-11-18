@@ -15,19 +15,19 @@ final class WalletTest extends TestCase
     {
         $wallet = Wallet::initial();
 
-        self::assertSame(100, $wallet->cebuliony());
-        self::assertSame(10, $wallet->zloteZeby());
-        self::assertSame(100, $wallet->kondycha());
-        self::assertSame(0, $wallet->zasiegi());
-        self::assertSame(0, $wallet->medale());
+        self::assertSame(100, $wallet->onions());
+        self::assertSame(10, $wallet->goldTeeth());
+        self::assertSame(100, $wallet->energy());
+        self::assertSame(0, $wallet->reach());
+        self::assertSame(0, $wallet->medals());
     }
 
     public function testAcceptsZeroBalances(): void
     {
-        $wallet = new Wallet(cebuliony: 0, zloteZeby: 0, kondycha: 0, zasiegi: 0, medale: 0);
+        $wallet = new Wallet(onions: 0, goldTeeth: 0, energy: 0, reach: 0, medals: 0);
 
-        self::assertSame(0, $wallet->cebuliony());
-        self::assertSame(0, $wallet->kondycha());
+        self::assertSame(0, $wallet->onions());
+        self::assertSame(0, $wallet->energy());
     }
 
     /**
@@ -35,11 +35,11 @@ final class WalletTest extends TestCase
      */
     public static function negativeBalances(): iterable
     {
-        yield 'cebuliony' => [[-1, 0, 0, 0, 0], 'cebuliony'];
-        yield 'zlote zeby' => [[0, -1, 0, 0, 0], 'zloteZeby'];
-        yield 'kondycha' => [[0, 0, -1, 0, 0], 'kondycha'];
-        yield 'zasiegi' => [[0, 0, 0, -1, 0], 'zasiegi'];
-        yield 'medale' => [[0, 0, 0, 0, -1], 'medale'];
+        yield 'onions' => [[-1, 0, 0, 0, 0], 'onions'];
+        yield 'gold teeth' => [[0, -1, 0, 0, 0], 'goldTeeth'];
+        yield 'energy' => [[0, 0, -1, 0, 0], 'energy'];
+        yield 'reach' => [[0, 0, 0, -1, 0], 'reach'];
+        yield 'medals' => [[0, 0, 0, 0, -1], 'medals'];
     }
 
     /**

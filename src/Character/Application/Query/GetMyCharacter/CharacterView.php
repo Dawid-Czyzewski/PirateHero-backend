@@ -9,15 +9,17 @@ use App\Character\Domain\Model\Character;
 final readonly class CharacterView
 {
     /**
-     * @param array{strength: int, endurance: int, technique: int, charisma: int}             $stats
-     * @param array{cebuliony: int, zloteZeby: int, kondycha: int, zasiegi: int, medale: int} $wallet
-     * @param array{face: int, hair: int, beard: int, skin: int, tattoo: int}                 $appearance
+     * @param array{current: int, required: int}                                       $experience
+     * @param array{strength: int, endurance: int, technique: int, charisma: int}      $stats
+     * @param array{onions: int, goldTeeth: int, energy: int, reach: int, medals: int} $wallet
+     * @param array{face: int, hair: int, beard: int, skin: int, tattoo: int}          $appearance
      */
     public function __construct(
         public string $id,
         public string $nick,
         public int $level,
         public int $maxHp,
+        public array $experience,
         public array $stats,
         public array $wallet,
         public array $appearance,
@@ -26,6 +28,7 @@ final readonly class CharacterView
 
     public static function fromCharacter(Character $character, string $nick): self
     {
+        $level = $character->level();
         $stats = $character->stats();
         $wallet = $character->wallet();
         $appearance = $character->appearance();
@@ -33,8 +36,12 @@ final readonly class CharacterView
         return new self(
             $character->id()->toString(),
             $nick,
-            $character->level()->value(),
+            $level->value(),
             $character->maxHp(),
+            [
+                'current' => $character->experience()->points(),
+                'required' => $level->requiredExperience(),
+            ],
             [
                 'strength' => $stats->strength(),
                 'endurance' => $stats->endurance(),
@@ -42,11 +49,11 @@ final readonly class CharacterView
                 'charisma' => $stats->charisma(),
             ],
             [
-                'cebuliony' => $wallet->cebuliony(),
-                'zloteZeby' => $wallet->zloteZeby(),
-                'kondycha' => $wallet->kondycha(),
-                'zasiegi' => $wallet->zasiegi(),
-                'medale' => $wallet->medale(),
+                'onions' => $wallet->onions(),
+                'goldTeeth' => $wallet->goldTeeth(),
+                'energy' => $wallet->energy(),
+                'reach' => $wallet->reach(),
+                'medals' => $wallet->medals(),
             ],
             [
                 'face' => $appearance->face(),

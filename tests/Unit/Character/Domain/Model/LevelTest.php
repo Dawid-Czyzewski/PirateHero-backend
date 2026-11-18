@@ -22,6 +22,30 @@ final class LevelTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{int, int}>
+     */
+    public static function experienceThresholds(): iterable
+    {
+        yield 'level 1' => [1, 100];
+        yield 'level 2' => [2, 200];
+        yield 'level 10' => [10, 1000];
+    }
+
+    #[DataProvider('experienceThresholds')]
+    public function testRequiresHundredExperiencePerLevel(int $level, int $required): void
+    {
+        self::assertSame($required, (new Level($level))->requiredExperience());
+    }
+
+    public function testNextLevelIsOneHigher(): void
+    {
+        $level = new Level(3);
+
+        self::assertSame(4, $level->next()->value());
+        self::assertSame(3, $level->value());
+    }
+
+    /**
      * @return iterable<string, array{int}>
      */
     public static function invalidLevels(): iterable

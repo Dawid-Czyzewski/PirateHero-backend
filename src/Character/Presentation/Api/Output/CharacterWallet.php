@@ -7,11 +7,11 @@ namespace App\Character\Presentation\Api\Output;
 final readonly class CharacterWallet
 {
     public function __construct(
-        public int $cebuliony,
-        public int $zloteZeby,
-        public int $kondycha,
-        public int $zasiegi,
-        public int $medale,
+        public int $onions,
+        public int $goldTeeth,
+        public int $energy,
+        public int $reach,
+        public int $medals,
     ) {
     }
 }

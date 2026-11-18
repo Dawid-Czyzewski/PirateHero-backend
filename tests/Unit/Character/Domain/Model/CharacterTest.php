@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Character\Domain\Model;
 
+use App\Character\Domain\Exception\InvalidCharacterData;
 use App\Character\Domain\Model\Appearance;
 use App\Character\Domain\Model\Character;
 use App\Character\Domain\Model\CharacterId;
@@ -45,16 +46,85 @@ final class CharacterTest extends TestCase
     {
         $wallet = $this->create()->wallet();
 
-        self::assertSame(100, $wallet->cebuliony());
-        self::assertSame(10, $wallet->zloteZeby());
-        self::assertSame(100, $wallet->kondycha());
-        self::assertSame(0, $wallet->zasiegi());
-        self::assertSame(0, $wallet->medale());
+        self::assertSame(100, $wallet->onions());
+        self::assertSame(10, $wallet->goldTeeth());
+        self::assertSame(100, $wallet->energy());
+        self::assertSame(0, $wallet->reach());
+        self::assertSame(0, $wallet->medals());
     }
 
     public function testStartingMaxHpIsFifteen(): void
     {
         self::assertSame(15, $this->create()->maxHp());
+    }
+
+    public function testCreateStartsWithoutExperience(): void
+    {
+        self::assertSame(0, $this->create()->experience()->points());
+    }
+
+    public function testGainBelowThresholdKeepsLevel(): void
+    {
+        $character = $this->create();
+
+        $character->gainExperience(60);
+
+        self::assertSame(1, $character->level()->value());
+        self::assertSame(60, $character->experience()->points());
+    }
+
+    public function testReachingThresholdLevelsUpWithEmptyProgress(): void
+    {
+        $character = $this->create();
+
+        $character->gainExperience(100);
+
+        self::assertSame(2, $character->level()->value());
+        self::assertSame(0, $character->experience()->points());
+    }
+
+    public function testGainsAcrossCallsAddUp(): void
+    {
+        $character = $this->create();
+
+        $character->gainExperience(70);
+        $character->gainExperience(50);
+
+        self::assertSame(2, $character->level()->value());
+        self::assertSame(20, $character->experience()->points());
+    }
+
+    public function testLargeGainLevelsUpSeveralTimesAndCarriesRemainder(): void
+    {
+        $character = $this->create();
+
+        $character->gainExperience(350);
+
+        self::assertSame(3, $character->level()->value());
+        self::assertSame(50, $character->experience()->points());
+    }
+
+    public function testLevelUpRaisesMaxHp(): void
+    {
+        $character = $this->create();
+
+        $character->gainExperience(100);
+
+        self::assertSame(20, $character->maxHp());
+    }
+
+    public function testRejectsGainBelowOnePointWithoutChangingProgress(): void
+    {
+        $character = $this->create();
+        $character->gainExperience(30);
+
+        try {
+            $character->gainExperience(0);
+            self::fail('Expected InvalidCharacterData');
+        } catch (InvalidCharacterData) {
+            self::assertSame(1, $character->level()->value());
+            self::assertSame(30, $character->experience()->points());
+        }
     }
 
     private function create(?Appearance $appearance = null): Character

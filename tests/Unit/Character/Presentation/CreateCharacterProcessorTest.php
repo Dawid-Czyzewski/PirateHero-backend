@@ -37,7 +37,7 @@ final class CreateCharacterProcessorTest extends TestCase
         self::assertSame(1, $resource->level);
         self::assertSame(15, $resource->maxHp);
         self::assertSame(1, $resource->stats->endurance);
-        self::assertSame(100, $resource->wallet->cebuliony);
+        self::assertSame(100, $resource->wallet->onions);
         self::assertSame(4, $resource->appearance->skin);
         self::assertSame(1, $this->characters->count());
     }

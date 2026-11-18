@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional;
 
+use App\Character\Domain\Model\CharacterId;
+use App\Character\Domain\Repository\CharacterRepository;
 use App\Tests\Factory\UserFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 
@@ -35,8 +37,9 @@ final class CharacterApiTest extends FunctionalTestCase
         self::assertSame('Cebulak', $data['nick']);
         self::assertSame(1, $data['level']);
         self::assertSame(15, $data['maxHp']);
+        self::assertSame(['current' => 0, 'required' => 100], $data['experience']);
         self::assertSame(['strength' => 1, 'endurance' => 1, 'technique' => 1, 'charisma' => 1], $data['stats']);
-        self::assertSame(['cebuliony' => 100, 'zloteZeby' => 10, 'kondycha' => 100, 'zasiegi' => 0, 'medale' => 0], $data['wallet']);
+        self::assertSame(['onions' => 100, 'goldTeeth' => 10, 'energy' => 100, 'reach' => 0, 'medals' => 0], $data['wallet']);
         self::assertSame(['face' => 3, 'hair' => 1, 'beard' => 7, 'skin' => 4, 'tattoo' => 0], $data['appearance']);
     }
 
@@ -103,7 +106,23 @@ final class CharacterApiTest extends FunctionalTestCase
 
         self::assertResponseStatusCodeSame(200);
         self::assertSame('Kapitan', $data['nick']);
+        self::assertSame(['current' => 0, 'required' => 100], $data['experience']);
         self::assertSame($created, $data);
+    }
+
+    public function testReadsExperienceTowardsNextLevel(): void
+    {
+        $token = $this->tokenFor('gracz@example.com');
+        $created = self::data($this->postJson('/api/characters', self::APPEARANCE, $token));
+        self::assertIsString($created['id'] ?? null);
+        $this->grantExperience($created['id'], 350);
+
+        $data = self::data($this->getJson('/api/me/character', $token));
+
+        self::assertResponseStatusCodeSame(200);
+        self::assertSame(3, $data['level']);
+        self::assertSame(['current' => 50, 'required' => 300], $data['experience']);
+        self::assertSame(25, $data['maxHp']);
     }
 
     public function testReadWithoutCharacterIsNotFound(): void
@@ -148,6 +167,16 @@ final class CharacterApiTest extends FunctionalTestCase
         self::assertIsArray($responses);
 
         return array_values(array_filter($expected, static fn (string $status): bool => \array_key_exists($status, $responses)));
+    }
+
+    private function grantExperience(string $characterId, int $points): void
+    {
+        $characters = self::getContainer()->get(CharacterRepository::class);
+        $character = $characters->ofId(CharacterId::fromString($characterId));
+        self::assertNotNull($character);
+
+        $character->gainExperience($points);
+        $characters->save($character);
     }
 
     private function tokenFor(string $email, ?string $nick = null): string

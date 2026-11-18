@@ -35,8 +35,9 @@ final class GetMyCharacterHandlerTest extends TestCase
         self::assertSame('Cebulak', $view->nick);
         self::assertSame(1, $view->level);
         self::assertSame(15, $view->maxHp);
+        self::assertSame(['current' => 0, 'required' => 100], $view->experience);
         self::assertSame(['strength' => 1, 'endurance' => 1, 'technique' => 1, 'charisma' => 1], $view->stats);
-        self::assertSame(['cebuliony' => 100, 'zloteZeby' => 10, 'kondycha' => 100, 'zasiegi' => 0, 'medale' => 0], $view->wallet);
+        self::assertSame(['onions' => 100, 'goldTeeth' => 10, 'energy' => 100, 'reach' => 0, 'medals' => 0], $view->wallet);
         self::assertSame(['face' => 3, 'hair' => 1, 'beard' => 7, 'skin' => 4, 'tattoo' => 0], $view->appearance);
     }
 

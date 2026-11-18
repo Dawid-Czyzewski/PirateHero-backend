@@ -10,6 +10,7 @@
         <field name="userId" type="user_id" column="user_id" unique="true"/>
 
         <embedded name="level" class="App\Character\Domain\Model\Level" use-column-prefix="false"/>
+        <embedded name="experience" class="App\Character\Domain\Model\Experience" use-column-prefix="false"/>
         <embedded name="stats" class="App\Character\Domain\Model\Stats" use-column-prefix="false"/>
         <embedded name="wallet" class="App\Character\Domain\Model\Wallet" use-column-prefix="false"/>
         <embedded name="appearance" class="App\Character\Domain\Model\Appearance" use-column-prefix="false"/>

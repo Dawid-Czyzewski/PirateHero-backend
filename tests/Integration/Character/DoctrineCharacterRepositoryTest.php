@@ -53,11 +53,11 @@ final class DoctrineCharacterRepositoryTest extends KernelTestCase
             $found->stats()->charisma(),
         ]);
         self::assertSame([100, 10, 100, 0, 0], [
-            $found->wallet()->cebuliony(),
-            $found->wallet()->zloteZeby(),
-            $found->wallet()->kondycha(),
-            $found->wallet()->zasiegi(),
-            $found->wallet()->medale(),
+            $found->wallet()->onions(),
+            $found->wallet()->goldTeeth(),
+            $found->wallet()->energy(),
+            $found->wallet()->reach(),
+            $found->wallet()->medals(),
         ]);
         self::assertSame([3, 1, 7, 4, 2], [
             $found->appearance()->face(),
@@ -67,6 +67,21 @@ final class DoctrineCharacterRepositoryTest extends KernelTestCase
             $found->appearance()->tattoo(),
         ]);
         self::assertSame(15, $found->maxHp());
+    }
+
+    public function testPersistsExperienceAndLevelAfterLevelUp(): void
+    {
+        $character = Character::create($this->characters->nextIdentity(), $this->existingUserId(), new Appearance(0, 0, 0, 0, 0));
+        $character->gainExperience(350);
+
+        $this->characters->save($character);
+        $this->entityManager->clear();
+
+        $found = $this->characters->ofId($character->id());
+
+        self::assertInstanceOf(Character::class, $found);
+        self::assertSame(3, $found->level()->value());
+        self::assertSame(50, $found->experience()->points());
     }
 
     public function testFindsCharacterByOwner(): void

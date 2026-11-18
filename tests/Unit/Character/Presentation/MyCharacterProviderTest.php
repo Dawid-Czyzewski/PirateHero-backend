@@ -37,7 +37,7 @@ final class MyCharacterProviderTest extends TestCase
         self::assertSame(self::CHARACTER_ID, $resource->id);
         self::assertSame('Cebulak', $resource->nick);
         self::assertSame(7, $resource->appearance->beard);
-        self::assertSame(10, $resource->wallet->zloteZeby);
+        self::assertSame(10, $resource->wallet->goldTeeth);
     }
 
     public function testMapsMissingCharacterToNotFound(): void

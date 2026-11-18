@@ -5,10 +5,10 @@
                     https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
 
     <embeddable name="App\Character\Domain\Model\Wallet">
-        <field name="cebuliony" type="integer" column="cebuliony"/>
-        <field name="zloteZeby" type="integer" column="zlote_zeby"/>
-        <field name="kondycha" type="integer" column="kondycha"/>
-        <field name="zasiegi" type="integer" column="zasiegi"/>
-        <field name="medale" type="integer" column="medale"/>
+        <field name="onions" type="integer" column="onions"/>
+        <field name="goldTeeth" type="integer" column="gold_teeth"/>
+        <field name="energy" type="integer" column="energy"/>
+        <field name="reach" type="integer" column="reach"/>
+        <field name="medals" type="integer" column="medals"/>
     </embeddable>
 </doctrine-mapping>

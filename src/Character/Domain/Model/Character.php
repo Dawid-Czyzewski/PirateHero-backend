@@ -12,6 +12,7 @@ class Character
         private readonly CharacterId $id,
         private readonly UserId $userId,
         private Level $level,
+        private Experience $experience,
         private Stats $stats,
         private Wallet $wallet,
         private Appearance $appearance,
@@ -20,7 +21,7 @@ class Character
 
     public static function create(CharacterId $id, UserId $userId, Appearance $appearance): self
     {
-        return new self($id, $userId, Level::start(), Stats::initial(), Wallet::initial(), $appearance);
+        return new self($id, $userId, Level::start(), Experience::none(), Stats::initial(), Wallet::initial(), $appearance);
     }
 
     public function id(): CharacterId
@@ -36,6 +37,25 @@ class Character
     public function level(): Level
     {
         return $this->level;
+    }
+
+    public function experience(): Experience
+    {
+        return $this->experience;
+    }
+
+    public function gainExperience(int $points): void
+    {
+        $experience = $this->experience->gain($points);
+        $level = $this->level;
+
+        while ($experience->reaches($level->requiredExperience())) {
+            $experience = $experience->spend($level->requiredExperience());
+            $level = $level->next();
+        }
+
+        $this->level = $level;
+        $this->experience = $experience;
     }
 
     public function stats(): Stats

@@ -8,60 +8,60 @@ use App\Character\Domain\Exception\InvalidCharacterData;
 
 final readonly class Wallet
 {
-    public const START_CEBULIONY = 100;
-    public const START_ZLOTE_ZEBY = 10;
-    public const START_KONDYCHA = 100;
-    public const START_ZASIEGI = 0;
-    public const START_MEDALE = 0;
+    public const START_ONIONS = 100;
+    public const START_GOLD_TEETH = 10;
+    public const START_ENERGY = 100;
+    public const START_REACH = 0;
+    public const START_MEDALS = 0;
 
     public function __construct(
-        private int $cebuliony,
-        private int $zloteZeby,
-        private int $kondycha,
-        private int $zasiegi,
-        private int $medale,
+        private int $onions,
+        private int $goldTeeth,
+        private int $energy,
+        private int $reach,
+        private int $medals,
     ) {
-        self::assertNotNegative('cebuliony', $cebuliony);
-        self::assertNotNegative('zloteZeby', $zloteZeby);
-        self::assertNotNegative('kondycha', $kondycha);
-        self::assertNotNegative('zasiegi', $zasiegi);
-        self::assertNotNegative('medale', $medale);
+        self::assertNotNegative('onions', $onions);
+        self::assertNotNegative('goldTeeth', $goldTeeth);
+        self::assertNotNegative('energy', $energy);
+        self::assertNotNegative('reach', $reach);
+        self::assertNotNegative('medals', $medals);
     }
 
     public static function initial(): self
     {
         return new self(
-            self::START_CEBULIONY,
-            self::START_ZLOTE_ZEBY,
-            self::START_KONDYCHA,
-            self::START_ZASIEGI,
-            self::START_MEDALE,
+            self::START_ONIONS,
+            self::START_GOLD_TEETH,
+            self::START_ENERGY,
+            self::START_REACH,
+            self::START_MEDALS,
         );
     }
 
-    public function cebuliony(): int
+    public function onions(): int
     {
-        return $this->cebuliony;
+        return $this->onions;
     }
 
-    public function zloteZeby(): int
+    public function goldTeeth(): int
     {
-        return $this->zloteZeby;
+        return $this->goldTeeth;
     }
 
-    public function kondycha(): int
+    public function energy(): int
     {
-        return $this->kondycha;
+        return $this->energy;
     }
 
-    public function zasiegi(): int
+    public function reach(): int
     {
-        return $this->zasiegi;
+        return $this->reach;
     }
 
-    public function medale(): int
+    public function medals(): int
     {
-        return $this->medale;
+        return $this->medals;
     }
 
     private static function assertNotNegative(string $field, int $value): void

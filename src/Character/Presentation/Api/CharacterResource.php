@@ -12,6 +12,7 @@ use ApiPlatform\OpenApi\Model\Operation as OpenApiOperation;
 use ApiPlatform\OpenApi\Model\Response as OpenApiResponse;
 use App\Character\Application\Query\GetMyCharacter\CharacterView;
 use App\Character\Presentation\Api\Output\CharacterAppearance;
+use App\Character\Presentation\Api\Output\CharacterExperience;
 use App\Character\Presentation\Api\Output\CharacterStats;
 use App\Character\Presentation\Api\Output\CharacterWallet;
 use App\Character\Presentation\Api\State\CreateCharacterProcessor;
@@ -52,6 +53,7 @@ final class CharacterResource
         public string $nick,
         public int $level,
         public int $maxHp,
+        public CharacterExperience $experience,
         public CharacterStats $stats,
         public CharacterWallet $wallet,
         public CharacterAppearance $appearance,
@@ -65,6 +67,7 @@ final class CharacterResource
             $view->nick,
             $view->level,
             $view->maxHp,
+            new CharacterExperience(...$view->experience),
             new CharacterStats(...$view->stats),
             new CharacterWallet(...$view->wallet),
             new CharacterAppearance(...$view->appearance),
