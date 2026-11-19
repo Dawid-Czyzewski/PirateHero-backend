@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Character\Domain\Model;
 
+use App\Character\Domain\Exception\InsufficientStamina;
 use App\Character\Domain\Exception\InvalidCharacterData;
 use App\Character\Domain\Model\Appearance;
 use App\Character\Domain\Model\Character;
 use App\Character\Domain\Model\CharacterId;
+use App\Character\Domain\Model\Stat;
 use App\Shared\Domain\Model\UserId;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class CharacterTest extends TestCase
@@ -68,6 +71,63 @@ final class CharacterTest extends TestCase
 
         self::assertSame(90, $character->stamina()->current(new \DateTimeImmutable('2026-11-19 13:00:00')));
         self::assertSame(91, $character->stamina()->current(new \DateTimeImmutable('2026-11-19 13:03:00')));
+    }
+
+    /**
+     * @return iterable<string, array{Stat}>
+     */
+    public static function stats(): iterable
+    {
+        foreach (Stat::cases() as $stat) {
+            yield $stat->value => [$stat];
+        }
+    }
+
+    #[DataProvider('stats')]
+    public function testTrainingCostsTenStaminaAndRaisesTheStat(Stat $stat): void
+    {
+        $character = $this->create();
+
+        $character->train($stat, new \DateTimeImmutable('2026-11-19 13:00:00'));
+
+        self::assertSame(2, $character->stats()->of($stat));
+        self::assertSame(90, $character->stamina()->current(new \DateTimeImmutable('2026-11-19 13:00:00')));
+    }
+
+    public function testTrainingEnduranceRaisesMaxHp(): void
+    {
+        $character = $this->create();
+
+        $character->train(Stat::Endurance, new \DateTimeImmutable('2026-11-19 13:00:00'));
+
+        self::assertSame(25, $character->maxHp());
+    }
+
+    public function testCannotTrainWithoutEnoughStaminaAndNothingChanges(): void
+    {
+        $character = $this->create();
+        $character->spendStamina(95, new \DateTimeImmutable('2026-11-19 13:00:00'));
+
+        try {
+            $character->train(Stat::Strength, new \DateTimeImmutable('2026-11-19 13:00:00'));
+            self::fail('Expected InsufficientStamina');
+        } catch (InsufficientStamina $e) {
+            self::assertSame(10, $e->cost);
+            self::assertSame(5, $e->available);
+        }
+        self::assertSame(1, $character->stats()->strength());
+        self::assertSame(5, $character->stamina()->current(new \DateTimeImmutable('2026-11-19 13:00:00')));
+    }
+
+    public function testStaminaRegeneratesAfterTraining(): void
+    {
+        $character = $this->create();
+
+        $character->train(Stat::Technique, new \DateTimeImmutable('2026-11-19 13:00:00'));
+
+        self::assertSame(90, $character->stamina()->current(new \DateTimeImmutable('2026-11-19 13:02:59')));
+        self::assertSame(91, $character->stamina()->current(new \DateTimeImmutable('2026-11-19 13:03:00')));
+        self::assertSame(100, $character->stamina()->current(new \DateTimeImmutable('2026-11-19 13:30:00')));
     }
 
     public function testStartingMaxHpIsFifteen(): void

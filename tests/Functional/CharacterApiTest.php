@@ -173,6 +173,96 @@ final class CharacterApiTest extends FunctionalTestCase
         self::assertArrayHasKey('get', $docs['paths']['/api/me/character'] ?? []);
         self::assertSame(['201', '401', '409', '422'], self::documentedStatuses($docs['paths']['/api/characters']['post'], ['201', '401', '409', '422']));
         self::assertSame(['200', '401', '404'], self::documentedStatuses($docs['paths']['/api/me/character']['get'], ['200', '401', '404']));
+        self::assertArrayHasKey('post', $docs['paths']['/api/me/character/training'] ?? []);
+        self::assertSame(['200', '401', '404', '409', '422'], self::documentedStatuses($docs['paths']['/api/me/character/training']['post'], ['200', '401', '404', '409', '422']));
+    }
+
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function trainableStats(): iterable
+    {
+        yield 'strength' => ['strength', 15];
+        yield 'endurance' => ['endurance', 25];
+        yield 'technique' => ['technique', 15];
+        yield 'charisma' => ['charisma', 15];
+    }
+
+    #[DataProvider('trainableStats')]
+    public function testTrainingRaisesTheStatAndReturnsTheCharacter(string $stat, int $maxHp): void
+    {
+        $token = $this->tokenFor('gracz@example.com');
+        $this->postJson('/api/characters', self::APPEARANCE, $token);
+
+        $data = self::data($this->postJson('/api/me/character/training', ['stat' => $stat], $token));
+
+        self::assertResponseStatusCodeSame(200);
+        self::assertIsArray($data['stats'] ?? null);
+        self::assertSame(2, $data['stats'][$stat]);
+        self::assertSame(4 + 1, array_sum($data['stats']));
+        self::assertSame($maxHp, $data['maxHp']);
+        self::assertIsArray($data['stamina'] ?? null);
+        self::assertSame(90, $data['stamina']['current']);
+
+        $saved = self::data($this->getJson('/api/me/character', $token));
+        self::assertSame($data['stats'], $saved['stats']);
+        self::assertSame($maxHp, $saved['maxHp']);
+        self::assertIsArray($saved['stamina'] ?? null);
+        self::assertSame(90, $saved['stamina']['current']);
+    }
+
+    public function testTrainingWithoutEnoughStaminaIsConflict(): void
+    {
+        $token = $this->tokenFor('gracz@example.com');
+        $created = self::data($this->postJson('/api/characters', self::APPEARANCE, $token));
+        self::assertIsString($created['id'] ?? null);
+        $this->changeCharacter($created['id'], static fn (Character $character) => $character->spendStamina(95, new \DateTimeImmutable()));
+
+        $data = self::data($this->postJson('/api/me/character/training', ['stat' => 'strength'], $token));
+
+        self::assertResponseStatusCodeSame(409);
+        self::assertSame('Za mało Kondychy na trening: potrzeba 10, masz 5.', $data['detail'] ?? null);
+        $saved = self::data($this->getJson('/api/me/character', $token));
+        self::assertIsArray($saved['stats'] ?? null);
+        self::assertSame(1, $saved['stats']['strength']);
+    }
+
+    /**
+     * @return iterable<string, array{array<string, mixed>}>
+     */
+    public static function invalidTrainingBodies(): iterable
+    {
+        yield 'unknown stat' => [['stat' => 'speed']];
+        yield 'missing stat' => [[]];
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     */
+    #[DataProvider('invalidTrainingBodies')]
+    public function testTrainingRejectsUnknownStat(array $body): void
+    {
+        $token = $this->tokenFor('gracz@example.com');
+        $this->postJson('/api/characters', self::APPEARANCE, $token);
+
+        $data = self::data($this->postJson('/api/me/character/training', $body, $token));
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertArrayHasKey('stat', self::violations($data));
+    }
+
+    public function testTrainingRequiresToken(): void
+    {
+        $this->postJson('/api/me/character/training', ['stat' => 'strength']);
+
+        self::assertResponseStatusCodeSame(401);
+    }
+
+    public function testTrainingWithoutCharacterIsNotFound(): void
+    {
+        $this->postJson('/api/me/character/training', ['stat' => 'strength'], $this->tokenFor('gracz@example.com'));
+
+        self::assertResponseStatusCodeSame(404);
     }
 
     /**

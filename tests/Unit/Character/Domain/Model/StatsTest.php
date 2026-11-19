@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Character\Domain\Model;
 
 use App\Character\Domain\Exception\InvalidCharacterData;
+use App\Character\Domain\Model\Stat;
 use App\Character\Domain\Model\Stats;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -19,6 +20,31 @@ final class StatsTest extends TestCase
         self::assertSame(1, $stats->endurance());
         self::assertSame(1, $stats->technique());
         self::assertSame(1, $stats->charisma());
+    }
+
+    /**
+     * @return iterable<string, array{Stat, array{int, int, int, int}}>
+     */
+    public static function trainings(): iterable
+    {
+        yield 'strength' => [Stat::Strength, [2, 1, 1, 1]];
+        yield 'endurance' => [Stat::Endurance, [1, 2, 1, 1]];
+        yield 'technique' => [Stat::Technique, [1, 1, 2, 1]];
+        yield 'charisma' => [Stat::Charisma, [1, 1, 1, 2]];
+    }
+
+    /**
+     * @param array{int, int, int, int} $expected
+     */
+    #[DataProvider('trainings')]
+    public function testTrainingRaisesOnlyTheChosenStatByOne(Stat $stat, array $expected): void
+    {
+        $initial = Stats::initial();
+        $trained = $initial->trained($stat);
+
+        self::assertSame($expected, [$trained->strength(), $trained->endurance(), $trained->technique(), $trained->charisma()]);
+        self::assertSame(2, $trained->of($stat));
+        self::assertSame(1, $initial->of($stat));
     }
 
     public function testKeepsEachStat(): void

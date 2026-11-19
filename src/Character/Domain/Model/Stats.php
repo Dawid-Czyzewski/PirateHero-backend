@@ -9,6 +9,7 @@ use App\Character\Domain\Exception\InvalidCharacterData;
 final readonly class Stats
 {
     public const MIN = 1;
+    public const TRAINING_GAIN = 1;
 
     public function __construct(
         private int $strength,
@@ -25,6 +26,26 @@ final readonly class Stats
     public static function initial(): self
     {
         return new self(self::MIN, self::MIN, self::MIN, self::MIN);
+    }
+
+    public function of(Stat $stat): int
+    {
+        return match ($stat) {
+            Stat::Strength => $this->strength,
+            Stat::Endurance => $this->endurance,
+            Stat::Technique => $this->technique,
+            Stat::Charisma => $this->charisma,
+        };
+    }
+
+    public function trained(Stat $stat): self
+    {
+        return new self(
+            $this->strength + self::gain(Stat::Strength, $stat),
+            $this->endurance + self::gain(Stat::Endurance, $stat),
+            $this->technique + self::gain(Stat::Technique, $stat),
+            $this->charisma + self::gain(Stat::Charisma, $stat),
+        );
     }
 
     public function strength(): int
@@ -45,6 +66,11 @@ final readonly class Stats
     public function charisma(): int
     {
         return $this->charisma;
+    }
+
+    private static function gain(Stat $stat, Stat $trained): int
+    {
+        return $stat === $trained ? self::TRAINING_GAIN : 0;
     }
 
     private static function assertAtLeastMin(string $field, int $value): void

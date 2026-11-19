@@ -8,6 +8,8 @@ use App\Shared\Domain\Model\UserId;
 
 class Character
 {
+    public const TRAINING_COST = 10;
+
     private function __construct(
         private readonly CharacterId $id,
         private readonly UserId $userId,
@@ -81,6 +83,12 @@ class Character
     public function spendStamina(int $cost, \DateTimeImmutable $now): void
     {
         $this->stamina = $this->stamina->spend($cost, $now);
+    }
+
+    public function train(Stat $stat, \DateTimeImmutable $now): void
+    {
+        $this->stamina = $this->stamina->spend(self::TRAINING_COST, $now);
+        $this->stats = $this->stats->trained($stat);
     }
 
     public function wallet(): Wallet
