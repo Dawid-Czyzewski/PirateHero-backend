@@ -12,6 +12,7 @@ use App\Character\Domain\Model\Character;
 use App\Shared\Domain\Model\UserId;
 use App\Tests\Double\Character\InMemoryCharacterRepository;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Clock\MockClock;
 
 final class CreateCharacterHandlerTest extends TestCase
 {
@@ -23,7 +24,7 @@ final class CreateCharacterHandlerTest extends TestCase
     protected function setUp(): void
     {
         $this->characters = new InMemoryCharacterRepository();
-        $this->handler = new CreateCharacterHandler($this->characters);
+        $this->handler = new CreateCharacterHandler($this->characters, new MockClock(new \DateTimeImmutable('2026-11-19 12:00:00')));
     }
 
     public function testCreatesCharacterForUserWithChosenAppearance(): void

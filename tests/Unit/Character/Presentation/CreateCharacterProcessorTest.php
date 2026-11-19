@@ -15,6 +15,7 @@ use App\Tests\Double\Character\InMemoryCharacterRepository;
 use App\Tests\Double\Character\InMemoryPlayerNicks;
 use App\Tests\Double\Shared\FixedCurrentUser;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Clock\MockClock;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
@@ -85,8 +86,8 @@ final class CreateCharacterProcessorTest extends TestCase
     {
         return new CreateCharacterProcessor(
             new FixedCurrentUser(null === $userId ? null : UserId::fromString($userId)),
-            new CreateCharacterHandler($this->characters),
-            new GetMyCharacterHandler($this->characters, new InMemoryPlayerNicks([self::USER_ID => 'Cebulak'])),
+            new CreateCharacterHandler($this->characters, new MockClock(new \DateTimeImmutable('2026-11-19 12:00:00'))),
+            new GetMyCharacterHandler($this->characters, new InMemoryPlayerNicks([self::USER_ID => 'Cebulak']), new MockClock(new \DateTimeImmutable('2026-11-19 12:00:00'))),
         );
     }
 

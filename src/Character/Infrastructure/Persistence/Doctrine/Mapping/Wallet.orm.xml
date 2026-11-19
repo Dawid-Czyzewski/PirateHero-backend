@@ -7,7 +7,6 @@
     <embeddable name="App\Character\Domain\Model\Wallet">
         <field name="onions" type="integer" column="onions"/>
         <field name="goldTeeth" type="integer" column="gold_teeth"/>
-        <field name="energy" type="integer" column="energy"/>
         <field name="reach" type="integer" column="reach"/>
         <field name="medals" type="integer" column="medals"/>
     </embeddable>

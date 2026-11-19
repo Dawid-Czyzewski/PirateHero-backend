@@ -8,12 +8,14 @@ use App\Character\Application\Player\PlayerNicks;
 use App\Character\Domain\Exception\CharacterNotFound;
 use App\Character\Domain\Repository\CharacterRepository;
 use App\Shared\Domain\Model\UserId;
+use Psr\Clock\ClockInterface;
 
 final readonly class GetMyCharacterHandler
 {
     public function __construct(
         private CharacterRepository $characters,
         private PlayerNicks $nicks,
+        private ClockInterface $clock,
     ) {
     }
 
@@ -25,6 +27,6 @@ final readonly class GetMyCharacterHandler
         $userId = UserId::fromString($query->userId);
         $character = $this->characters->ofUserId($userId) ?? throw CharacterNotFound::forUser($userId);
 
-        return CharacterView::fromCharacter($character, $this->nicks->nickOf($userId));
+        return CharacterView::fromCharacter($character, $this->nicks->nickOf($userId), $this->clock->now());
     }
 }

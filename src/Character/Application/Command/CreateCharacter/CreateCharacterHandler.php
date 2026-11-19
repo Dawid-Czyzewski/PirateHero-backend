@@ -11,11 +11,14 @@ use App\Character\Domain\Model\Character;
 use App\Character\Domain\Model\CharacterId;
 use App\Character\Domain\Repository\CharacterRepository;
 use App\Shared\Domain\Model\UserId;
+use Psr\Clock\ClockInterface;
 
 final readonly class CreateCharacterHandler
 {
-    public function __construct(private CharacterRepository $characters)
-    {
+    public function __construct(
+        private CharacterRepository $characters,
+        private ClockInterface $clock,
+    ) {
     }
 
     /**
@@ -31,7 +34,7 @@ final readonly class CreateCharacterHandler
             throw CharacterAlreadyExists::forUser($userId);
         }
 
-        $character = Character::create($this->characters->nextIdentity(), $userId, $appearance);
+        $character = Character::create($this->characters->nextIdentity(), $userId, $appearance, $this->clock->now());
         $this->characters->save($character);
 
         return $character->id();

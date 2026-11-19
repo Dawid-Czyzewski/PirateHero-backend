@@ -13,6 +13,7 @@ use ApiPlatform\OpenApi\Model\Response as OpenApiResponse;
 use App\Character\Application\Query\GetMyCharacter\CharacterView;
 use App\Character\Presentation\Api\Output\CharacterAppearance;
 use App\Character\Presentation\Api\Output\CharacterExperience;
+use App\Character\Presentation\Api\Output\CharacterStamina;
 use App\Character\Presentation\Api\Output\CharacterStats;
 use App\Character\Presentation\Api\Output\CharacterWallet;
 use App\Character\Presentation\Api\State\CreateCharacterProcessor;
@@ -44,6 +45,7 @@ use App\Character\Presentation\Api\State\MyCharacterProvider;
             provider: MyCharacterProvider::class,
         ),
     ],
+    normalizationContext: ['skip_null_values' => false],
 )]
 final class CharacterResource
 {
@@ -54,6 +56,7 @@ final class CharacterResource
         public int $level,
         public int $maxHp,
         public CharacterExperience $experience,
+        public CharacterStamina $stamina,
         public CharacterStats $stats,
         public CharacterWallet $wallet,
         public CharacterAppearance $appearance,
@@ -68,6 +71,7 @@ final class CharacterResource
             $view->level,
             $view->maxHp,
             new CharacterExperience(...$view->experience),
+            new CharacterStamina(...$view->stamina),
             new CharacterStats(...$view->stats),
             new CharacterWallet(...$view->wallet),
             new CharacterAppearance(...$view->appearance),

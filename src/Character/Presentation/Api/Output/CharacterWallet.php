@@ -9,7 +9,6 @@ final readonly class CharacterWallet
     public function __construct(
         public int $onions,
         public int $goldTeeth,
-        public int $energy,
         public int $reach,
         public int $medals,
     ) {

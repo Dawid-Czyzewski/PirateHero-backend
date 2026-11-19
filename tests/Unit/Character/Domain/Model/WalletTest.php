@@ -17,33 +17,31 @@ final class WalletTest extends TestCase
 
         self::assertSame(100, $wallet->onions());
         self::assertSame(10, $wallet->goldTeeth());
-        self::assertSame(100, $wallet->energy());
         self::assertSame(0, $wallet->reach());
         self::assertSame(0, $wallet->medals());
     }
 
     public function testAcceptsZeroBalances(): void
     {
-        $wallet = new Wallet(onions: 0, goldTeeth: 0, energy: 0, reach: 0, medals: 0);
+        $wallet = new Wallet(onions: 0, goldTeeth: 0, reach: 0, medals: 0);
 
         self::assertSame(0, $wallet->onions());
-        self::assertSame(0, $wallet->energy());
+        self::assertSame(0, $wallet->medals());
     }
 
     /**
-     * @return iterable<string, array{array{int, int, int, int, int}, string}>
+     * @return iterable<string, array{array{int, int, int, int}, string}>
      */
     public static function negativeBalances(): iterable
     {
-        yield 'onions' => [[-1, 0, 0, 0, 0], 'onions'];
-        yield 'gold teeth' => [[0, -1, 0, 0, 0], 'goldTeeth'];
-        yield 'energy' => [[0, 0, -1, 0, 0], 'energy'];
-        yield 'reach' => [[0, 0, 0, -1, 0], 'reach'];
-        yield 'medals' => [[0, 0, 0, 0, -1], 'medals'];
+        yield 'onions' => [[-1, 0, 0, 0], 'onions'];
+        yield 'gold teeth' => [[0, -1, 0, 0], 'goldTeeth'];
+        yield 'reach' => [[0, 0, -1, 0], 'reach'];
+        yield 'medals' => [[0, 0, 0, -1], 'medals'];
     }
 
     /**
-     * @param array{int, int, int, int, int} $values
+     * @param array{int, int, int, int} $values
      */
     #[DataProvider('negativeBalances')]
     public function testRejectsNegativeBalance(array $values, string $field): void

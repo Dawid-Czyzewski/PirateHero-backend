@@ -14,6 +14,7 @@ use App\Shared\Domain\Model\UserId;
 use App\Tests\Double\Character\InMemoryCharacterRepository;
 use App\Tests\Double\Character\InMemoryPlayerNicks;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Clock\MockClock;
 
 final class GetMyCharacterHandlerTest extends TestCase
 {
@@ -27,9 +28,10 @@ final class GetMyCharacterHandlerTest extends TestCase
             CharacterId::fromString(self::CHARACTER_ID),
             UserId::fromString(self::USER_ID),
             new Appearance(face: 3, hair: 1, beard: 7, skin: 4, tattoo: 0),
+            new \DateTimeImmutable('2026-11-19 12:00:00'),
         ));
 
-        $view = (new GetMyCharacterHandler($characters, self::nicks()))(new GetMyCharacterQuery(self::USER_ID));
+        $view = (new GetMyCharacterHandler($characters, self::nicks(), new MockClock(new \DateTimeImmutable('2026-11-19 12:00:00'))))(new GetMyCharacterQuery(self::USER_ID));
 
         self::assertSame(self::CHARACTER_ID, $view->id);
         self::assertSame('Cebulak', $view->nick);
@@ -37,7 +39,8 @@ final class GetMyCharacterHandlerTest extends TestCase
         self::assertSame(15, $view->maxHp);
         self::assertSame(['current' => 0, 'required' => 100], $view->experience);
         self::assertSame(['strength' => 1, 'endurance' => 1, 'technique' => 1, 'charisma' => 1], $view->stats);
-        self::assertSame(['onions' => 100, 'goldTeeth' => 10, 'energy' => 100, 'reach' => 0, 'medals' => 0], $view->wallet);
+        self::assertSame(['current' => 100, 'max' => 100, 'nextPointInSeconds' => null], $view->stamina);
+        self::assertSame(['onions' => 100, 'goldTeeth' => 10, 'reach' => 0, 'medals' => 0], $view->wallet);
         self::assertSame(['face' => 3, 'hair' => 1, 'beard' => 7, 'skin' => 4, 'tattoo' => 0], $view->appearance);
     }
 
@@ -45,7 +48,7 @@ final class GetMyCharacterHandlerTest extends TestCase
     {
         $this->expectException(CharacterNotFound::class);
 
-        (new GetMyCharacterHandler(new InMemoryCharacterRepository(), self::nicks()))(new GetMyCharacterQuery(self::USER_ID));
+        (new GetMyCharacterHandler(new InMemoryCharacterRepository(), self::nicks(), new MockClock(new \DateTimeImmutable('2026-11-19 12:00:00'))))(new GetMyCharacterQuery(self::USER_ID));
     }
 
     private static function nicks(): InMemoryPlayerNicks

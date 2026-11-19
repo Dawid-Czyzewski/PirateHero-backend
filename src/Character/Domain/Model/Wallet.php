@@ -10,20 +10,17 @@ final readonly class Wallet
 {
     public const START_ONIONS = 100;
     public const START_GOLD_TEETH = 10;
-    public const START_ENERGY = 100;
     public const START_REACH = 0;
     public const START_MEDALS = 0;
 
     public function __construct(
         private int $onions,
         private int $goldTeeth,
-        private int $energy,
         private int $reach,
         private int $medals,
     ) {
         self::assertNotNegative('onions', $onions);
         self::assertNotNegative('goldTeeth', $goldTeeth);
-        self::assertNotNegative('energy', $energy);
         self::assertNotNegative('reach', $reach);
         self::assertNotNegative('medals', $medals);
     }
@@ -33,7 +30,6 @@ final readonly class Wallet
         return new self(
             self::START_ONIONS,
             self::START_GOLD_TEETH,
-            self::START_ENERGY,
             self::START_REACH,
             self::START_MEDALS,
         );
@@ -47,11 +43,6 @@ final readonly class Wallet
     public function goldTeeth(): int
     {
         return $this->goldTeeth;
-    }
-
-    public function energy(): int
-    {
-        return $this->energy;
     }
 
     public function reach(): int

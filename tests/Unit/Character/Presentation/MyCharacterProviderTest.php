@@ -15,6 +15,7 @@ use App\Tests\Double\Character\InMemoryCharacterRepository;
 use App\Tests\Double\Character\InMemoryPlayerNicks;
 use App\Tests\Double\Shared\FixedCurrentUser;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Clock\MockClock;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
@@ -30,6 +31,7 @@ final class MyCharacterProviderTest extends TestCase
             CharacterId::fromString(self::CHARACTER_ID),
             UserId::fromString(self::USER_ID),
             new Appearance(face: 3, hair: 1, beard: 7, skin: 4, tattoo: 0),
+            new \DateTimeImmutable('2026-11-19 12:00:00'),
         ));
 
         $resource = $this->provider($characters, self::USER_ID)->provide(new Get());
@@ -59,7 +61,7 @@ final class MyCharacterProviderTest extends TestCase
     {
         return new MyCharacterProvider(
             new FixedCurrentUser(null === $userId ? null : UserId::fromString($userId)),
-            new GetMyCharacterHandler($characters, new InMemoryPlayerNicks([self::USER_ID => 'Cebulak'])),
+            new GetMyCharacterHandler($characters, new InMemoryPlayerNicks([self::USER_ID => 'Cebulak']), new MockClock(new \DateTimeImmutable('2026-11-19 12:00:00'))),
         );
     }
 }

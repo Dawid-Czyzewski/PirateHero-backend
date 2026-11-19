@@ -48,9 +48,26 @@ final class CharacterTest extends TestCase
 
         self::assertSame(100, $wallet->onions());
         self::assertSame(10, $wallet->goldTeeth());
-        self::assertSame(100, $wallet->energy());
         self::assertSame(0, $wallet->reach());
         self::assertSame(0, $wallet->medals());
+    }
+
+    public function testCreateStartsWithFullStamina(): void
+    {
+        $stamina = $this->create()->stamina();
+
+        self::assertSame(100, $stamina->current(new \DateTimeImmutable('2026-11-19 12:00:00')));
+        self::assertNull($stamina->secondsToNextPoint(new \DateTimeImmutable('2026-11-19 12:00:00')));
+    }
+
+    public function testSpendingStaminaLowersItFromTheMomentOfSpending(): void
+    {
+        $character = $this->create();
+
+        $character->spendStamina(10, new \DateTimeImmutable('2026-11-19 13:00:00'));
+
+        self::assertSame(90, $character->stamina()->current(new \DateTimeImmutable('2026-11-19 13:00:00')));
+        self::assertSame(91, $character->stamina()->current(new \DateTimeImmutable('2026-11-19 13:03:00')));
     }
 
     public function testStartingMaxHpIsFifteen(): void
@@ -133,6 +150,7 @@ final class CharacterTest extends TestCase
             CharacterId::fromString(self::CHARACTER_ID),
             UserId::fromString(self::USER_ID),
             $appearance ?? new Appearance(0, 0, 0, 0, 0),
+            new \DateTimeImmutable('2026-11-19 12:00:00'),
         );
     }
 }

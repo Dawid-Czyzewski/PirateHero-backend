@@ -34,7 +34,7 @@ final class DoctrineCharacterRepositoryTest extends KernelTestCase
     public function testSavedCharacterCanBeReadBackById(): void
     {
         $userId = $this->existingUserId();
-        $character = Character::create($this->characters->nextIdentity(), $userId, new Appearance(3, 1, 7, 4, 2));
+        $character = Character::create($this->characters->nextIdentity(), $userId, new Appearance(3, 1, 7, 4, 2), new \DateTimeImmutable('2026-11-19 12:00:00'));
 
         $this->characters->save($character);
         $this->entityManager->clear();
@@ -52,10 +52,9 @@ final class DoctrineCharacterRepositoryTest extends KernelTestCase
             $found->stats()->technique(),
             $found->stats()->charisma(),
         ]);
-        self::assertSame([100, 10, 100, 0, 0], [
+        self::assertSame([100, 10, 0, 0], [
             $found->wallet()->onions(),
             $found->wallet()->goldTeeth(),
-            $found->wallet()->energy(),
             $found->wallet()->reach(),
             $found->wallet()->medals(),
         ]);
@@ -71,7 +70,7 @@ final class DoctrineCharacterRepositoryTest extends KernelTestCase
 
     public function testPersistsExperienceAndLevelAfterLevelUp(): void
     {
-        $character = Character::create($this->characters->nextIdentity(), $this->existingUserId(), new Appearance(0, 0, 0, 0, 0));
+        $character = Character::create($this->characters->nextIdentity(), $this->existingUserId(), new Appearance(0, 0, 0, 0, 0), new \DateTimeImmutable('2026-11-19 12:00:00'));
         $character->gainExperience(350);
 
         $this->characters->save($character);
@@ -84,10 +83,26 @@ final class DoctrineCharacterRepositoryTest extends KernelTestCase
         self::assertSame(50, $found->experience()->points());
     }
 
+    public function testPersistsStaminaWithItsRegenerationTime(): void
+    {
+        $character = Character::create($this->characters->nextIdentity(), $this->existingUserId(), new Appearance(0, 0, 0, 0, 0), new \DateTimeImmutable('2026-11-19 12:00:00'));
+        $character->spendStamina(30, new \DateTimeImmutable('2026-11-19 12:10:00'));
+
+        $this->characters->save($character);
+        $this->entityManager->clear();
+
+        $found = $this->characters->ofId($character->id());
+
+        self::assertInstanceOf(Character::class, $found);
+        self::assertSame(70, $found->stamina()->points());
+        self::assertEquals(new \DateTimeImmutable('2026-11-19 12:10:00'), $found->stamina()->updatedAt());
+        self::assertSame(72, $found->stamina()->current(new \DateTimeImmutable('2026-11-19 12:16:00')));
+    }
+
     public function testFindsCharacterByOwner(): void
     {
         $userId = $this->existingUserId();
-        $character = Character::create($this->characters->nextIdentity(), $userId, new Appearance(0, 0, 0, 0, 0));
+        $character = Character::create($this->characters->nextIdentity(), $userId, new Appearance(0, 0, 0, 0, 0), new \DateTimeImmutable('2026-11-19 12:00:00'));
         $this->characters->save($character);
         $this->entityManager->clear();
 
@@ -111,11 +126,11 @@ final class DoctrineCharacterRepositoryTest extends KernelTestCase
     public function testAllowsOnlyOneCharacterPerUser(): void
     {
         $userId = $this->existingUserId();
-        $this->characters->save(Character::create($this->characters->nextIdentity(), $userId, new Appearance(0, 0, 0, 0, 0)));
+        $this->characters->save(Character::create($this->characters->nextIdentity(), $userId, new Appearance(0, 0, 0, 0, 0), new \DateTimeImmutable('2026-11-19 12:00:00')));
 
         $this->expectException(CharacterAlreadyExists::class);
 
-        $this->characters->save(Character::create($this->characters->nextIdentity(), $userId, new Appearance(1, 1, 1, 1, 1)));
+        $this->characters->save(Character::create($this->characters->nextIdentity(), $userId, new Appearance(1, 1, 1, 1, 1), new \DateTimeImmutable('2026-11-19 12:00:00')));
     }
 
     public function testRequiresExistingUser(): void
@@ -126,13 +141,14 @@ final class DoctrineCharacterRepositoryTest extends KernelTestCase
             $this->characters->nextIdentity(),
             UserId::fromString('01a1a3ff-0000-7000-8000-000000000000'),
             new Appearance(0, 0, 0, 0, 0),
+            new \DateTimeImmutable('2026-11-19 12:00:00'),
         ));
     }
 
     public function testCharacterIsDeletedTogetherWithItsUser(): void
     {
         $user = UserFactory::createOne();
-        $character = Character::create($this->characters->nextIdentity(), $user->id(), new Appearance(0, 0, 0, 0, 0));
+        $character = Character::create($this->characters->nextIdentity(), $user->id(), new Appearance(0, 0, 0, 0, 0), new \DateTimeImmutable('2026-11-19 12:00:00'));
         $this->characters->save($character);
 
         $this->entityManager->getConnection()->executeStatement('DELETE FROM users WHERE id = ?', [$user->id()->toString()]);
