@@ -40,6 +40,7 @@ services:
     App\Character\Domain\Repository\CharacterRepository: '@App\Character\Infrastructure\Persistence\Doctrine\DoctrineCharacterRepository'
     App\Character\Application\Player\PlayerNicks: '@App\Character\Infrastructure\Identity\IdentityPlayerNicks'
     App\Shared\Application\Security\CurrentUser: '@App\Identity\Infrastructure\Security\SymfonyCurrentUser'
+    App\Combat\Domain\Random\RandomIntProvider: '@App\Combat\Infrastructure\Random\PhpRandomIntProvider'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

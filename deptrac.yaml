@@ -14,6 +14,10 @@ deptrac:
       collectors:
         - type: directory
           value: src/Character/Domain/.*
+    - name: CombatDomain
+      collectors:
+        - type: directory
+          value: src/Combat/Domain/.*
     - name: Application
       collectors:
         - type: directory
@@ -40,15 +44,19 @@ deptrac:
       - SharedDomain
     CharacterDomain:
       - SharedDomain
+    CombatDomain:
+      - SharedDomain
     Application:
       - SharedDomain
       - IdentityDomain
       - CharacterDomain
+      - CombatDomain
       - Psr
     Infrastructure:
       - SharedDomain
       - IdentityDomain
       - CharacterDomain
+      - CombatDomain
       - Application
       - Framework
       - Psr
@@ -56,6 +64,7 @@ deptrac:
       - SharedDomain
       - IdentityDomain
       - CharacterDomain
+      - CombatDomain
       - Application
       - Infrastructure
       - Framework
