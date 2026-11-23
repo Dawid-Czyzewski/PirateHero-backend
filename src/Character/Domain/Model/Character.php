@@ -82,7 +82,15 @@ class Character
 
     public function spendStamina(int $cost, \DateTimeImmutable $now): void
     {
+        if (0 === $cost) {
+            return;
+        }
         $this->stamina = $this->stamina->spend($cost, $now);
+    }
+
+    public function earnOnions(int $amount): void
+    {
+        $this->wallet = $this->wallet->earnOnions($amount);
     }
 
     public function train(Stat $stat, \DateTimeImmutable $now): void

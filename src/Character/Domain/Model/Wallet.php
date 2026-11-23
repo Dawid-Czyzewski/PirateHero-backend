@@ -55,6 +55,13 @@ final readonly class Wallet
         return $this->medals;
     }
 
+    public function earnOnions(int $amount): self
+    {
+        self::assertNotNegative('onions', $amount);
+
+        return new self($this->onions + $amount, $this->goldTeeth, $this->reach, $this->medals);
+    }
+
     private static function assertNotNegative(string $field, int $value): void
     {
         if ($value < 0) {

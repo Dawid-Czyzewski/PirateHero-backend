@@ -73,6 +73,25 @@ final class CharacterTest extends TestCase
         self::assertSame(91, $character->stamina()->current(new \DateTimeImmutable('2026-11-19 13:03:00')));
     }
 
+    public function testSpendingNoStaminaKeepsItFull(): void
+    {
+        $character = $this->create();
+
+        $character->spendStamina(0, new \DateTimeImmutable('2026-11-19 13:00:00'));
+
+        self::assertSame(100, $character->stamina()->current(new \DateTimeImmutable('2026-11-19 13:00:00')));
+        self::assertNull($character->stamina()->secondsToNextPoint(new \DateTimeImmutable('2026-11-19 13:00:00')));
+    }
+
+    public function testEarnsOnionsIntoTheWallet(): void
+    {
+        $character = $this->create();
+
+        $character->earnOnions(25);
+
+        self::assertSame(125, $character->wallet()->onions());
+    }
+
     /**
      * @return iterable<string, array{Stat}>
      */

@@ -7,7 +7,6 @@ namespace App\Tests\Functional;
 use App\Character\Domain\Model\Character;
 use App\Character\Domain\Model\CharacterId;
 use App\Character\Domain\Repository\CharacterRepository;
-use App\Tests\Factory\UserFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 
 final class CharacterApiTest extends FunctionalTestCase
@@ -295,13 +294,6 @@ final class CharacterApiTest extends FunctionalTestCase
 
         $change($character);
         $characters->save($character);
-    }
-
-    private function tokenFor(string $email, ?string $nick = null): string
-    {
-        UserFactory::createOne(null === $nick ? ['email' => $email] : ['email' => $email, 'nick' => $nick]);
-
-        return $this->login($email, UserFactory::DEFAULT_PASSWORD)['token'];
     }
 
     /**

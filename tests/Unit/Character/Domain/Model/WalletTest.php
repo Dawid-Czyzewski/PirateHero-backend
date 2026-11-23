@@ -21,6 +21,22 @@ final class WalletTest extends TestCase
         self::assertSame(0, $wallet->medals());
     }
 
+    public function testEarningOnionsAddsToTheBalanceOnly(): void
+    {
+        $wallet = Wallet::initial()->earnOnions(35);
+
+        self::assertSame(135, $wallet->onions());
+        self::assertSame(10, $wallet->goldTeeth());
+        self::assertSame(135, $wallet->earnOnions(0)->onions());
+    }
+
+    public function testCannotEarnNegativeOnions(): void
+    {
+        $this->expectException(InvalidCharacterData::class);
+
+        Wallet::initial()->earnOnions(-1);
+    }
+
     public function testAcceptsZeroBalances(): void
     {
         $wallet = new Wallet(onions: 0, goldTeeth: 0, reach: 0, medals: 0);

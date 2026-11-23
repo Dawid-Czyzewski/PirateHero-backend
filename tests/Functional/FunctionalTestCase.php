@@ -6,6 +6,7 @@ namespace App\Tests\Functional;
 
 use ApiPlatform\Symfony\Bundle\Test\ApiTestCase;
 use ApiPlatform\Symfony\Bundle\Test\Client;
+use App\Tests\Factory\UserFactory;
 use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Contracts\HttpClient\ResponseInterface;
@@ -59,6 +60,13 @@ abstract class FunctionalTestCase extends ApiTestCase
     protected static function data(ResponseInterface $response): array
     {
         return $response->toArray(false);
+    }
+
+    protected function tokenFor(string $email, ?string $nick = null): string
+    {
+        UserFactory::createOne(null === $nick ? ['email' => $email] : ['email' => $email, 'nick' => $nick]);
+
+        return $this->login($email, UserFactory::DEFAULT_PASSWORD)['token'];
     }
 
     /**
