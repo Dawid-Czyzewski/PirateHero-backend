@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Combat\Application;
 
 use App\Character\Domain\Exception\CharacterNotFound;
+use App\Character\Domain\Exception\InsufficientFightPoints;
 use App\Character\Domain\Model\Appearance;
 use App\Character\Domain\Model\Character;
 use App\Character\Domain\Model\CharacterId;
@@ -50,7 +51,7 @@ final class FightNpcHandlerTest extends TestCase
         self::assertCount(9, $view->result['rounds']);
         self::assertSame(['experience' => 25, 'onions' => 15], $view->reward);
         self::assertSame(['before' => 1, 'after' => 1], $view->level);
-        self::assertSame(0, $view->staminaCost);
+        self::assertSame(1, $view->fightPointCost);
     }
 
     public function testSavesTheRewardInTheCharacter(): void
@@ -63,7 +64,28 @@ final class FightNpcHandlerTest extends TestCase
         self::assertNotNull($character);
         self::assertSame(25, $character->experience()->points());
         self::assertSame(115, $character->wallet()->onions());
+        self::assertSame(9, $character->fightPoints()->current($this->clock->now()));
         self::assertSame(100, $character->stamina()->current($this->clock->now()));
+    }
+
+    public function testRefusesToFightWithoutFightPointsAndChangesNothing(): void
+    {
+        $character = $this->character();
+        $character->spendFightPoints(10, $this->clock->now());
+        $this->characters->save($character);
+
+        try {
+            $this->handler()(new FightNpcCommand(self::USER_ID, 'kosa'));
+            self::fail('Expected missing fight points.');
+        } catch (InsufficientFightPoints $e) {
+            self::assertSame(1, $e->cost);
+            self::assertSame(0, $e->available);
+        }
+
+        $saved = $this->characters->ofUserId(UserId::fromString(self::USER_ID));
+        self::assertNotNull($saved);
+        self::assertSame(0, $saved->experience()->points());
+        self::assertSame(100, $saved->wallet()->onions());
     }
 
     public function testDefeatStillPaysExperienceAndCanLevelUp(): void

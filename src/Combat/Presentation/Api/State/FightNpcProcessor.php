@@ -7,7 +7,7 @@ namespace App\Combat\Presentation\Api\State;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use App\Character\Domain\Exception\CharacterNotFound;
-use App\Character\Domain\Exception\InsufficientStamina;
+use App\Character\Domain\Exception\InsufficientFightPoints;
 use App\Combat\Application\Command\FightNpc\FightNpcHandler;
 use App\Combat\Domain\Exception\NpcNotFound;
 use App\Combat\Presentation\Api\FightNpcInput;
@@ -38,8 +38,8 @@ final readonly class FightNpcProcessor implements ProcessorInterface
             throw new NotFoundHttpException('Character not found.');
         } catch (NpcNotFound) {
             throw new NotFoundHttpException('Opponent not found.');
-        } catch (InsufficientStamina $e) {
-            throw new ConflictHttpException(\sprintf('Za mało Kondychy na walkę: potrzeba %d, masz %d.', $e->cost, $e->available));
+        } catch (InsufficientFightPoints $e) {
+            throw new ConflictHttpException(\sprintf('Za mało punktów walki: potrzeba %d, masz %d.', $e->cost, $e->available));
         }
     }
 }

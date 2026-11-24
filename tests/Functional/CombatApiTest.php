@@ -95,12 +95,33 @@ final class CombatApiTest extends FunctionalTestCase
         self::assertNotEmpty($fight['rounds']);
         self::assertSame(['number', 'attacker', 'damage', 'playerHp', 'npcHp'], array_keys($fight['rounds'][0]));
         self::assertSame(['before' => 1, 'after' => 1], $fight['level']);
-        self::assertSame(0, $fight['staminaCost']);
+        self::assertSame(1, $fight['fightPointCost']);
 
         $character = self::data($this->getJson('/api/me/character', $token));
         self::assertSame($fight['reward']['experience'], $character['experience']['current']);
         self::assertSame(100 + $fight['reward']['onions'], $character['wallet']['onions']);
         self::assertSame(100, $character['stamina']['current']);
+        self::assertSame(9, $character['fightPoints']['current']);
+        self::assertSame(900, $character['fightPoints']['nextPointInSeconds']);
+    }
+
+    public function testRefusesToFightWithoutFightPointsAndChangesNothing(): void
+    {
+        $token = $this->playerWithCharacter();
+        for ($i = 0; $i < 10; ++$i) {
+            $this->postJson('/api/me/fights', ['npcId' => 'kosa'], $token);
+            self::assertResponseIsSuccessful();
+        }
+        $before = self::data($this->getJson('/api/me/character', $token));
+
+        $data = self::data($this->postJson('/api/me/fights', ['npcId' => 'kosa'], $token));
+
+        self::assertResponseStatusCodeSame(409);
+        self::assertSame('Za mało punktów walki: potrzeba 1, masz 0.', $data['detail'] ?? null);
+        $after = self::data($this->getJson('/api/me/character', $token));
+        self::assertSame($before['experience'], $after['experience']);
+        self::assertSame($before['wallet'], $after['wallet']);
+        self::assertSame(0, $after['fightPoints']['current']);
     }
 
     public function testFightIsDocumented(): void

@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace App\Character\Application\Query\GetMyCharacter;
 
 use App\Character\Domain\Model\Character;
-use App\Character\Domain\Model\Stamina;
+use App\Character\Domain\Model\RegeneratingResource;
 
 final readonly class CharacterView
 {
     /**
      * @param array{current: int, required: int}                                  $experience
      * @param array{current: int, max: int, nextPointInSeconds: int|null}         $stamina
+     * @param array{current: int, max: int, nextPointInSeconds: int|null}         $fightPoints
      * @param array{strength: int, endurance: int, technique: int, charisma: int} $stats
      * @param array{onions: int, goldTeeth: int, reach: int, medals: int}         $wallet
      * @param array{face: int, hair: int, beard: int, skin: int, tattoo: int}     $appearance
@@ -23,6 +24,7 @@ final readonly class CharacterView
         public int $maxHp,
         public array $experience,
         public array $stamina,
+        public array $fightPoints,
         public array $stats,
         public array $wallet,
         public array $appearance,
@@ -32,7 +34,6 @@ final readonly class CharacterView
     public static function fromCharacter(Character $character, string $nick, \DateTimeImmutable $now): self
     {
         $level = $character->level();
-        $stamina = $character->stamina();
         $stats = $character->stats();
         $wallet = $character->wallet();
         $appearance = $character->appearance();
@@ -46,11 +47,8 @@ final readonly class CharacterView
                 'current' => $character->experience()->points(),
                 'required' => $level->requiredExperience(),
             ],
-            [
-                'current' => $stamina->current($now),
-                'max' => Stamina::MAX,
-                'nextPointInSeconds' => $stamina->secondsToNextPoint($now),
-            ],
+            self::poolOf($character->stamina(), $now),
+            self::poolOf($character->fightPoints(), $now),
             [
                 'strength' => $stats->strength(),
                 'endurance' => $stats->endurance(),
@@ -71,5 +69,17 @@ final readonly class CharacterView
                 'tattoo' => $appearance->tattoo(),
             ],
         );
+    }
+
+    /**
+     * @return array{current: int, max: int, nextPointInSeconds: int|null}
+     */
+    private static function poolOf(RegeneratingResource $resource, \DateTimeImmutable $now): array
+    {
+        return [
+            'current' => $resource->current($now),
+            'max' => $resource::max(),
+            'nextPointInSeconds' => $resource->secondsToNextPoint($now),
+        ];
     }
 }

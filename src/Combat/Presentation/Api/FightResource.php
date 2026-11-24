@@ -21,7 +21,7 @@ use App\Combat\Presentation\Api\State\FightNpcProcessor;
             openapi: new OpenApiOperation(responses: [
                 '401' => new OpenApiResponse('Missing or invalid JWT.'),
                 '404' => new OpenApiResponse('Character or NPC not found.'),
-                '409' => new OpenApiResponse('Not enough stamina.'),
+                '409' => new OpenApiResponse('Not enough fight points.'),
             ]),
             security: "is_granted('ROLE_USER')",
             input: FightNpcInput::class,
@@ -47,7 +47,7 @@ final readonly class FightResource
         public array $rounds,
         public array $reward,
         public array $level,
-        public int $staminaCost,
+        public int $fightPointCost,
     ) {
     }
 
@@ -61,7 +61,7 @@ final readonly class FightResource
             $view->result['rounds'],
             $view->reward,
             $view->level,
-            $view->staminaCost,
+            $view->fightPointCost,
         );
     }
 }

@@ -40,6 +40,7 @@ final class CharacterApiTest extends FunctionalTestCase
         self::assertSame(['current' => 0, 'required' => 100], $data['experience']);
         self::assertSame(['strength' => 1, 'endurance' => 1, 'technique' => 1, 'charisma' => 1], $data['stats']);
         self::assertSame(['current' => 100, 'max' => 100, 'nextPointInSeconds' => null], $data['stamina']);
+        self::assertSame(['current' => 10, 'max' => 10, 'nextPointInSeconds' => null], $data['fightPoints']);
         self::assertSame(['onions' => 100, 'goldTeeth' => 10, 'reach' => 0, 'medals' => 0], $data['wallet']);
         self::assertSame(['face' => 3, 'hair' => 1, 'beard' => 7, 'skin' => 4, 'tattoo' => 0], $data['appearance']);
     }

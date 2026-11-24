@@ -15,7 +15,7 @@ final class CombatBalance
     public const MIN_DAMAGE = 1;
 
     public const MAX_ROUNDS = 20;
-    public const STAMINA_COST = 0;
+    public const FIGHT_POINT_COST = 1;
 
     public const WIN_BASE_EXPERIENCE = 20;
     public const WIN_EXPERIENCE_PER_NPC_LEVEL = 5;

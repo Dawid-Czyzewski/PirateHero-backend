@@ -73,14 +73,23 @@ final class CharacterTest extends TestCase
         self::assertSame(91, $character->stamina()->current(new \DateTimeImmutable('2026-11-19 13:03:00')));
     }
 
-    public function testSpendingNoStaminaKeepsItFull(): void
+    public function testCreateStartsWithFullFightPoints(): void
+    {
+        $fightPoints = $this->create()->fightPoints();
+
+        self::assertSame(10, $fightPoints->current(new \DateTimeImmutable('2026-11-19 12:00:00')));
+        self::assertNull($fightPoints->secondsToNextPoint(new \DateTimeImmutable('2026-11-19 12:00:00')));
+    }
+
+    public function testSpendingFightPointsLeavesStaminaUntouched(): void
     {
         $character = $this->create();
 
-        $character->spendStamina(0, new \DateTimeImmutable('2026-11-19 13:00:00'));
+        $character->spendFightPoints(1, new \DateTimeImmutable('2026-11-19 13:00:00'));
 
+        self::assertSame(9, $character->fightPoints()->current(new \DateTimeImmutable('2026-11-19 13:00:00')));
+        self::assertSame(10, $character->fightPoints()->current(new \DateTimeImmutable('2026-11-19 13:15:00')));
         self::assertSame(100, $character->stamina()->current(new \DateTimeImmutable('2026-11-19 13:00:00')));
-        self::assertNull($character->stamina()->secondsToNextPoint(new \DateTimeImmutable('2026-11-19 13:00:00')));
     }
 
     public function testEarnsOnionsIntoTheWallet(): void

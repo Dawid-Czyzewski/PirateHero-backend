@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Character\Presentation\Api\Output;
 
-final readonly class CharacterStamina
+final readonly class CharacterPool
 {
     public function __construct(
         public int $current,

@@ -25,7 +25,7 @@ final readonly class FightView
         public array $result,
         public array $reward,
         public array $level,
-        public int $staminaCost,
+        public int $fightPointCost,
     ) {
     }
 
@@ -37,7 +37,7 @@ final readonly class FightView
             $result->toArray(),
             $reward->toArray(),
             ['before' => $levelBefore, 'after' => $levelAfter],
-            CombatBalance::STAMINA_COST,
+            CombatBalance::FIGHT_POINT_COST,
         );
     }
 }

@@ -17,6 +17,7 @@ class Character
         private Experience $experience,
         private Stats $stats,
         private Stamina $stamina,
+        private FightPoints $fightPoints,
         private Wallet $wallet,
         private Appearance $appearance,
     ) {
@@ -31,6 +32,7 @@ class Character
             Experience::none(),
             Stats::initial(),
             Stamina::full($now),
+            FightPoints::full($now),
             Wallet::initial(),
             $appearance,
         );
@@ -82,10 +84,17 @@ class Character
 
     public function spendStamina(int $cost, \DateTimeImmutable $now): void
     {
-        if (0 === $cost) {
-            return;
-        }
         $this->stamina = $this->stamina->spend($cost, $now);
+    }
+
+    public function fightPoints(): FightPoints
+    {
+        return $this->fightPoints;
+    }
+
+    public function spendFightPoints(int $cost, \DateTimeImmutable $now): void
+    {
+        $this->fightPoints = $this->fightPoints->spend($cost, $now);
     }
 
     public function earnOnions(int $amount): void

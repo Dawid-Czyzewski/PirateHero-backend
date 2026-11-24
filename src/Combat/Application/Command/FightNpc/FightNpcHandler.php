@@ -6,7 +6,7 @@ namespace App\Combat\Application\Command\FightNpc;
 
 use App\Character\Application\Player\PlayerNicks;
 use App\Character\Domain\Exception\CharacterNotFound;
-use App\Character\Domain\Exception\InsufficientStamina;
+use App\Character\Domain\Exception\InsufficientFightPoints;
 use App\Character\Domain\Model\Character;
 use App\Character\Domain\Repository\CharacterRepository;
 use App\Combat\Domain\Catalog\NpcCatalog;
@@ -34,7 +34,7 @@ final readonly class FightNpcHandler
     /**
      * @throws CharacterNotFound
      * @throws NpcNotFound
-     * @throws InsufficientStamina
+     * @throws InsufficientFightPoints
      */
     public function __invoke(FightNpcCommand $command): FightView
     {
@@ -43,7 +43,7 @@ final readonly class FightNpcHandler
         $npc = $this->npcs->ofId($command->npcId);
         $levelBefore = $character->level()->value();
 
-        $character->spendStamina(CombatBalance::STAMINA_COST, $this->clock->now());
+        $character->spendFightPoints(CombatBalance::FIGHT_POINT_COST, $this->clock->now());
         $player = self::fighterOf($character, $this->nicks->nickOf($userId));
         $result = $this->engine->fight($player, $npc->fighter);
         $reward = $this->rewards->for($result, $npc->fighter);
